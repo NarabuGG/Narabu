@@ -179,16 +179,16 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 <script>
 {
 /* enseignes : nom, couleur du texte, type, autres façons de l'écrire dans la recherche */
-const BR={m:{n:"McDonald's",t:'#9a6a00',cat:'bu',al:['mcdonalds','mcdonald s','mcdonald','mcdo','macdo','mac do','mc do']},
- b:{n:'Burger King',t:'#1f4e9c',cat:'bu',al:['burger king','burgerking','bk']},
- k:{n:'KFC',t:'#555',cat:'po',al:['kfc']},
- q:{n:'Quick',t:'#c4142a',cat:'bu',al:['quick']},
- o:{n:"O'Tacos",t:'#6b5a00',cat:'ta',al:['o tacos','otacos']},
- f:{n:'Five Guys',t:'#7a1f1f',cat:'bu',al:['five guys','fiveguys','5 guys']},
- p:{n:'Popeyes',t:'#c24600',cat:'po',al:['popeyes','popeye']},
- c:{n:'Chicken Street',t:'#5b2a86',cat:'po',al:['chicken street','chickenstreet']},
- t:{n:'Chamas Tacos',t:'#0f7a6c',cat:'ta',al:['chamas tacos','chamas']},
- i:{n:'Bioburger',t:'#2e7d32',cat:'bu',al:['bioburger','bio burger']}};
+const BR={m:{n:"McDonald's",s:'McDo',t:'#9a6a00',cat:'bu',al:['mcdonalds','mcdonald s','mcdonald','mcdo','macdo','mac do','mc do']},
+ b:{n:'Burger King',s:'BK',t:'#1f4e9c',cat:'bu',al:['burger king','burgerking','bk']},
+ k:{n:'KFC',s:'KFC',t:'#555',cat:'po',al:['kfc']},
+ q:{n:'Quick',s:'Quick',t:'#c4142a',cat:'bu',al:['quick']},
+ o:{n:"O'Tacos",s:"O'Tacos",t:'#6b5a00',cat:'ta',al:['o tacos','otacos']},
+ f:{n:'Five Guys',s:'Five Guys',t:'#7a1f1f',cat:'bu',al:['five guys','fiveguys','5 guys']},
+ p:{n:'Popeyes',s:'Popeyes',t:'#c24600',cat:'po',al:['popeyes','popeye']},
+ c:{n:'Chicken Street',s:'Chicken St',t:'#5b2a86',cat:'po',al:['chicken street','chickenstreet']},
+ t:{n:'Chamas Tacos',s:'Chamas',t:'#0f7a6c',cat:'ta',al:['chamas tacos','chamas']},
+ i:{n:'Bioburger',s:'Bioburger',t:'#2e7d32',cat:'bu',al:['bioburger','bio burger']}};
 const CATS={bu:{n:'Burgers',al:['burgers','burger','hamburgers','hamburger']},po:{n:'Poulet',al:['poulet','chicken']},ta:{n:'Tacos',al:['tacos','taco']}};
 const brOf=c=>Object.keys(BR).filter(k=>BR[k].cat===c);
 /* icônes maison, volontairement génériques : frites, burger, pilon */
@@ -310,7 +310,7 @@ function pinSVG(b,lv,e){const fill=PINC[lv][e?1:0],inner=ICO[b].replace('<svg ',
 const loadImg=svg=>new Promise((ok,ko)=>{const i=new Image(72,92);i.onload=()=>ok(i);i.onerror=ko;i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
 async function addPins(){for(const b of Object.keys(BR))for(const [lv,e] of [[0,0],[1,0],[2,0],[3,0],[1,1],[2,1],[3,1]]){const k=`${b}-${lv}${e?'e':''}`;if(!map.hasImage(k))map.addImage(k,await loadImg(pinSVG(b,lv,e)),{pixelRatio:2})}}
 const visible=r=>(!F.sel||F.sel.includes(r.b))&&(!F.open||openNow(r)?.o!==false);
-const fc=()=>({type:'FeatureCollection',features:R.filter(visible).map(r=>({type:'Feature',geometry:{type:'Point',coordinates:[r.lon,r.lat]},properties:{id:r.id,b:r.b,cur:r.cur,e:r.st.est?1:0,c:r.st.closed?1:0,name:r.name,...labOf(r)}}))});
+const fc=()=>({type:'FeatureCollection',features:R.filter(visible).map(r=>({type:'Feature',geometry:{type:'Point',coordinates:[r.lon,r.lat]},properties:{id:r.id,b:r.b,bs:BR[r.b].s,cur:r.cur,e:r.st.est?1:0,c:r.st.closed?1:0,name:r.name,...labOf(r)}}))});
 /* sous le nom du resto, en toutes lettres : « Du monde », « Calme, estimé », « Fermé » */
 const labOf=r=>{const s=r.st;return s.closed?{lt:'Fermé',lc:'#8d959e'}:s.cur?{lt:LV[s.cur].n+(s.est?', estimé':''),lc:PINC[s.cur][0]}:{lt:'',lc:'#8d959e'}};
 let bound=false;
@@ -319,7 +319,7 @@ function addRestos(){map.addSource('r',{type:'geojson',data:fc(),cluster:true,cl
  map.addLayer({id:'cln',type:'symbol',source:'r',filter:['has','point_count'],layout:{'text-field':['get','point_count_abbreviated'],'text-font':[FONT],'text-size':13,'text-allow-overlap':true},paint:{'text-color':NUIT()?'#f1f2f4':'#1f2328'}});
  map.addLayer({id:'selc',type:'circle',source:'r',filter:['==',['get','id'],''],paint:{'circle-radius':21,'circle-translate':[0,-29],'circle-color':'rgba(0,0,0,0)','circle-stroke-color':NUIT()?'#ffffff':'#1f2328','circle-stroke-width':3}});
  map.addLayer({id:'pins',type:'symbol',source:'r',filter:['!',['has','point_count']],layout:{'icon-image':['concat',['get','b'],'-',['to-string',['get','cur']],['case',['==',['get','e'],1],'e','']],'icon-anchor':'bottom','icon-allow-overlap':true,'symbol-sort-key':['get','cur'],
-  'text-field':['step',['zoom'],'',13,['format',['get','name'],{},'\n',{},['get','lt'],{'text-color':['to-color',['get','lc'],'#8d959e'],'font-scale':.92}]],'text-font':[FONT],'text-size':12,'text-offset':[0,.25],'text-anchor':'top','text-optional':true,'text-max-width':9},paint:{'text-color':NUIT()?'#f1f2f4':'#1f2328','text-halo-color':NUIT()?'#14161a':'#ffffff','text-halo-width':1.6,'icon-opacity':['case',['==',['get','c'],1],.45,1],'text-opacity':['case',['==',['get','c'],1],.6,1]}});
+  'text-field':['step',['zoom'],'',12,['get','bs'],13.5,['format',['concat',['get','bs'],' · ',['get','name']],{},'\n',{},['get','lt'],{'text-color':['to-color',['get','lc'],'#8d959e'],'font-scale':.92}]],'text-font':[FONT],'text-size':12,'text-offset':[0,.25],'text-anchor':'top','text-optional':true,'text-max-width':9},paint:{'text-color':NUIT()?'#f1f2f4':'#1f2328','text-halo-color':NUIT()?'#14161a':'#ffffff','text-halo-width':1.6,'icon-opacity':['case',['==',['get','c'],1],.45,1],'text-opacity':['case',['==',['get','c'],1],.6,1]}});
  if(bound)return;bound=true;   /* les clics sont branchés une seule fois : ils survivent au changement de mode */
  map.on('click','pins',e=>openR(byId[e.features[0].properties.id],false));
  map.on('click','cl',async e=>{const f=e.features[0];try{const z=await map.getSource('r').getClusterExpansionZoom(f.properties.cluster_id);map.easeTo({center:f.geometry.coordinates,zoom:z+.4})}catch(_){map.easeTo({center:f.geometry.coordinates,zoom:map.getZoom()+2})}});
