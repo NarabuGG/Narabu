@@ -3,7 +3,7 @@
   "short_name": "Narabu",
   "description": "Y a la queue ou pas ? L'affluence en direct dans les fast-foods.",
   "lang": "fr",
-  "start_url": "./",
+  "start_url": "./carte.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",

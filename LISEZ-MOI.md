@@ -2,7 +2,7 @@
 
 Ce dossier est le site complet. Une fois en ligne tu auras :
 
-- une vraie adresse, du type `https://TONPSEUDO.github.io/narabu/` ;
+- une vraie adresse, du type `https://TONPSEUDO.github.io/narabu/` : la page de présentation (`index.html`), et la carte juste derrière (`carte.html`) ;
 - la carte avec toutes les rues partout (OpenFreeMap) ;
 - les infos des gens partagées **en temps réel** entre tous les visiteurs (Firebase) ;
 - le bouton « Autour de moi » et la question automatique « Tu es au McDo X ? » ;
@@ -102,14 +102,25 @@ Limites techniques : l'IA ne voit que ce qui est sur la photo et rate les person
 - **Partager.** Chaque resto a son lien direct (`.../#r-m1582`). Sur téléphone, le bouton ouvre le menu de partage (WhatsApp, Snap, etc.).
 - **Signaler un problème.** Les signalements arrivent dans Firebase, collection `problemes` (visible seulement par toi, dans la console). Le chiffre `k` veut dire : 1 fermé définitivement, 2 mal placé, 3 horaires faux, 4 info fausse, 5 autre.
 
-## Mode tomate et mode nuit
+## Les enseignes
 
-Le bouton « Mode nuit » / « Mode tomate » est en haut du panneau. Le choix est gardé sur l'appareil. Sans choix, le site suit le réglage clair ou sombre du téléphone.
+10 enseignes : McDonald's, Burger King, KFC, Quick, O'Tacos, Five Guys, Popeyes, Chicken Street, Chamas Tacos et Bioburger (3 660 restos au 14/11/2026).
+
+- **Rechercher.** Dans la barre du haut, on peut taper une enseigne (« quick », « mcdo »), un type (« tacos », « poulet », « burger ») ou les deux avec une ville (« tacos rennes »). En haut de la carte : Tout, Burgers, Poulet, Tacos, et « Une enseigne… » pour en choisir une dans la liste.
+- **Données.** Toutes viennent d'All The Places. Pour Chamas Tacos, les positions de la source sont souvent le centre de la ville : chaque nouveau resto est repositionné à partir de son adresse (Base Adresse Nationale). Les restos hors de France présents par erreur dans la source sont écartés.
+- **Horaires.** Chicken Street et Chamas Tacos ne publient pas d'horaires : leurs restos ne sont jamais affichés « fermé ». Quand des horaires ne citent qu'un ou deux jours, ils sont ignorés (mieux vaut « pas d'info » qu'un faux « fermé »).
+- **Ajouter une enseigne.** Dans `scripts/restos.py`, ajoute une ligne à `ENSEIGNES` (nom du fichier All The Places, lettre libre). Puis, dans `carte.html`, ajoute la même lettre dans `BR` (nom, type), `ICO` (icône), `BG` et `FG` (couleurs), et une ligne CSS `.bX`. La liste des enseignes disponibles est sur le site d'All The Places (alltheplaces.xyz).
+
+## Mode jour et mode nuit
+
+Le bouton « Mode nuit » / « Mode jour » est en haut du panneau. Le choix est gardé sur l'appareil. Sans choix, le site suit le réglage clair ou sombre du téléphone.
 
 ## Changer l'icône ou le nom
 
 - Icône : remplace les fichiers du dossier `icons` (mêmes noms, mêmes tailles).
-- Nom : « Narabu » apparaît dans `index.html`, `manifest.webmanifest`, `mentions.html` et `sw.js`.
+- Nom : « Narabu » apparaît dans `index.html` (présentation), `carte.html` (l'appli), `manifest.webmanifest`, `mentions.html` et `sw.js`.
+- Images de la présentation : dossier `img/`. Remplace un fichier par un autre du même nom pour changer une affiche.
+- L'appli installée sur le téléphone s'ouvre directement sur la carte (`start_url` dans `manifest.webmanifest`).
 
 ## Les limites du gratuit
 
