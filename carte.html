@@ -131,6 +131,8 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 .tagl{display:inline-block;background:var(--soft);border-radius:12px;padding:3px 10px;font-size:13px;margin:6px 4px 0 0}.tagl.w{background:light-dark(#fff0d9,#3a2a12);font-weight:600}
 .day{height:64px}.wave .now{outline:2px solid var(--ink);outline-offset:1px}
 .tip{font-size:14px;margin:10px 0 0;font-weight:700}
+.row .dist{margin-left:auto;text-align:right;white-space:nowrap;padding-left:8px}.row .dist b{display:block;font-size:14px}.row .dist small{color:var(--mut);font-size:12px}
+.f.me-f{gap:6px}.f.me-f svg{width:16px;height:16px}
 .me{width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 6px #1a73e833,0 1px 4px #0006}
 #near{position:absolute;top:10px;left:10px;right:10px;max-width:440px;margin:0 auto;z-index:950;background:var(--bg);border-radius:14px;box-shadow:0 4px 18px #0005;padding:10px 12px;display:none}
 #near .nt{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;font-size:15px}
@@ -333,7 +335,7 @@ function hint(){const h=$('hint');if(!map||$('near').style.display==='block'){h.
 /* filtres */
 function selName(){const k=F.sel;if(!k)return'';const c=Object.keys(CATS).find(c=>brOf(c).join()===k.join());return c?CATS[c].n:k.length===1?BR[k[0]].n:k.map(x=>BR[x].n).join(', ')}
 function filters(){const same=c=>F.sel&&brOf(c).join()===F.sel.join(),custom=F.sel&&!Object.keys(CATS).some(same);
- $('filters').innerHTML=(custom?`<button class="f" data-f="all" aria-pressed="true" aria-label="Retirer le filtre ${esc(selName())}">${F.sel.length===1?badge(F.sel[0],0):''}${esc(selName())}<span class="x">×</span></button>`:'')
+ $('filters').innerHTML=(CFG.position&&!ART&&navigator.geolocation?`<button class="f me-f" data-f="me" aria-pressed="${!!ME}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Près de moi</button>`:'')+(custom?`<button class="f" data-f="all" aria-pressed="true" aria-label="Retirer le filtre ${esc(selName())}">${F.sel.length===1?badge(F.sel[0],0):''}${esc(selName())}<span class="x">×</span></button>`:'')
   +`<button class="f" data-f="all" aria-pressed="${!F.sel}">Tout</button>`
   +Object.entries(CATS).map(([c,v])=>`<button class="f" data-f="c-${c}" aria-pressed="${!!same(c)}">${v.n}</button>`).join('')
   +`<button class="f" data-f="pick">Une enseigne…</button><button class="f" data-f="open" aria-pressed="${F.open}">Ouvert maintenant</button>`}
@@ -341,6 +343,7 @@ function setSelB(list,msg){F.sel=list&&list.length&&list.length<Object.keys(BR).
  if(F.sel&&map){const b=map.getBounds(),vis=R.filter(visible);if(!vis.some(r=>b.contains([r.lon,r.lat]))&&vis.length){const bb=new maplibregl.LngLatBounds();for(const r of vis)bb.extend([r.lon,r.lat]);map.fitBounds(bb,{padding:pad(),maxZoom:13})}}
  $('filters').scrollLeft=0;if(msg)toast(F.sel?`Seulement ${selName()} sur la carte`:'Toutes les enseignes sur la carte')}
 $('filters').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;const k=b.dataset.f;
+ if(k==='me')return locate();
  if(k==='open'){F.open=!F.open;return rebuild()}
  if(k==='all')return setSelB(null,!!F.sel);
  if(k==='pick'){$('q').value='';$('q').focus();return search(true)}
@@ -405,13 +408,21 @@ const SRCS={both:['Auto + gens','Estimation automatique, corrigée en direct par
 const srcBox=()=>`<div class="srcb"><div class="seg" role="group" aria-label="Source des couleurs">${Object.entries(SRCS).map(([k,v])=>`<button data-s="${k}" aria-pressed="${SRC===k}">${v[0]}</button>`).join('')}</div><p class="mut" style="margin:6px 0 0;font-size:13px">${SRCS[SRC][1]}</p></div>`;
 const stTxt=st=>st.closed?'Fermé':!st.cur?'Pas d\'info':`<span style="color:${LV[st.cur].c};font-weight:800">${LV[st.cur].n}</span> · ${st.est?'estimé':ago(st.c.last)}`;
 const stBadge=r=>badge(r.b,r.st.cur,'s'+(r.st.est?' est':'')+(r.st.closed?' off':''));
-function rowR(r){return `<button class="row" data-r="${r.id}">${stBadge(r)}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small>${stTxt(r.st)}</small></span></button>`}
+/* distance depuis ta position (si tu as appuyé sur « Près de moi ») : 80 m par minute à pied, à peu près */
+const dOf=r=>ME?distM(ME.lat,ME.lon,r.lat,r.lon):null;
+const dTxt=d=>d==null?'':d<1000?`${Math.max(10,Math.round(d/10)*10)} m`:`${(d/1000).toFixed(d<10000?1:0).replace('.',',')} km`;
+const walkTxt=d=>d==null?'':d<=2500?`${Math.max(1,Math.round(d/80))} min à pied`:'';
+function rowR(r){const d=dOf(r);return `<button class="row" data-r="${r.id}">${stBadge(r)}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small>${stTxt(r.st)}${d!=null?' · '+dTxt(d):''}</small></span></button>`}
+/* les restos les plus proches de toi, avec tes filtres (enseigne, type, ouvert) */
+function nearBox(){if(!ME)return'';const l=R.filter(visible).map(r=>[r,dOf(r)]).filter(x=>x[1]<15000).sort((a,b)=>a[1]-b[1]).slice(0,8);
+ const what=F.sel?selName():'Fast-foods';
+ return `<h3 style="margin-top:14px">${esc(what)} près de toi</h3>`+(l.length?l.map(([r,d])=>`<button class="row" data-r="${r.id}">${stBadge(r)}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small>${stTxt(r.st)}</small></span><span class="dist"><b>${dTxt(d)}</b>${walkTxt(d)?'<small>'+walkTxt(d)+'</small>':''}</span></button>`).join(''):'<p class="note">Aucun resto à moins de 15 km avec tes filtres.</p>')}
 function rowLive(r){const c=crowd(r.id);if(!c)return'';const lv=lvOf(c.b);return `<button class="row" data-r="${r.id}">${badge(r.b,lv,'s')}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small><span style="color:${LV[lv].c};font-weight:800">${LV[lv].n}</span> · ${ago(c.last)} · ${esc(r.city)}</small></span></button>`}
 function renderHome(){view='home';const z=map?map.getZoom():0;let h='';
  if(z>=10.5){const b=map.getBounds(),ctr=map.getCenter(),dist=r=>ctr.distanceTo(new maplibregl.LngLat(r.lon,r.lat)),conf=r=>r.st.cur&&!r.st.est?1:0;const list=R.filter(r=>visible(r)&&b.contains([r.lon,r.lat]));
   list.sort((a,b)=>(conf(b)-conf(a))||dist(a)-dist(b));
-  h+=`<div class="hrow"><h2>${list.length} resto${list.length>1?'s':''} ici</h2>${thBtn()}</div>${srcBox()}`+(list.length?list.slice(0,60).map(r=>rowR(r)).join(''):'<p class="note">Aucun resto dans cette zone avec tes filtres.</p>')+(list.length>60?'<p class="mut">Zoome pour voir les autres.</p>':'')}
- else{h+=`<div class="hrow"><h2>Il y a du monde ?</h2>${thBtn()}</div><p class="mut" style="margin:0">Choisis une ville ou zoome sur la carte.</p>${srcBox()}<h3>Villes</h3><div class="cities">${QUICK.filter(n=>bestTown(n)).map(n=>`<button data-c="${n}">${n}</button>`).join('')}</div>`}
+  h+=`<div class="hrow"><h2>${list.length} resto${list.length>1?'s':''} ici</h2>${thBtn()}</div>${srcBox()}${nearBox()}${ME?'<h3>Sur la carte</h3>':''}`+(list.length?list.slice(0,60).map(r=>rowR(r)).join(''):'<p class="note">Aucun resto dans cette zone avec tes filtres.</p>')+(list.length>60?'<p class="mut">Zoome pour voir les autres.</p>':'')}
+ else{h+=`<div class="hrow"><h2>Il y a du monde ?</h2>${thBtn()}</div><p class="mut" style="margin:0">Choisis une ville ou zoome sur la carte.</p>${srcBox()}${nearBox()}<h3>Villes</h3><div class="cities">${QUICK.filter(n=>bestTown(n)).map(n=>`<button data-c="${n}">${n}</button>`).join('')}</div>`}
  const now=Date.now(),hot=[...new Set(reports.filter(x=>now-x.ts<WIN&&byId[x.r]).sort((a,b)=>b.ts-a.ts).map(x=>x.r))].slice(0,8);
  h+=`<h3>En direct, par les gens</h3>`+(hot.length?hot.map(id=>rowLive(byId[id])).join(''):'<p class="note">Personne n\'a encore donné d\'info ces 90 dernières minutes. Tu es dans un fast-food ? Clique dessus et dis-le.</p>');
  h+=ptsBox();
@@ -450,7 +461,7 @@ function renderDetail(){const r=sel;if(!r)return;view='detail';const st=r.st=sta
   :mode==='ro'?'<p class="note">Tu es en lecture seule.</p>':mode==='local'?'<p class="note">Mode test local : ton info reste sur cet appareil.</p>':'';
  $('pin').innerHTML=`<button class="back" id="backBtn">← Retour</button>
  <div style="display:flex;gap:8px;align-items:center">${badge(r.b,0,'s')}<span class="brand" style="color:${BR[r.b].t}">${BR[r.b].n}</span></div><h2>${esc(r.name)}</h2>
- <div class="mut">${esc(r.addr)}${r.addr?', ':''}${esc(r.cp)} ${esc(r.city)}</div>
+ <div class="mut">${esc(r.addr)}${r.addr?', ':''}${esc(r.cp)} ${esc(r.city)}${ME?` · <b style="color:var(--ink)">à ${dTxt(dOf(r))}</b>${walkTxt(dOf(r))?' ('+walkTxt(dOf(r))+')':''}`:''}</div>
  <div class="mut" style="margin-top:2px">${oh?`<b style="color:${oh.o?'var(--ok)':'var(--bad)'}">${oh.t}</b>`:'Horaires inconnus'}${r.dr?' · Drive':''}</div>
  ${prof.length?`<div>${prof.map(p=>`<span class="tagl">${p}</span>`).join('')}</div>`:''}
  <div class="st${st.est?' est':''}" style="--c:${col};background:${col}"><strong>${head[0]}</strong><small>${head[1]}</small></div>
@@ -496,9 +507,10 @@ const meFresh=()=>ME&&Date.now()-ME.ts<3*60e3;
 const geoFlag=r=>{if(!meFresh())return 0;const d=distM(ME.lat,ME.lon,r.lat,r.lon);return d<=200?1:d>500?-1:0};
 function setMe(p){ME={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy||0,ts:Date.now()};
  if(!meMk){const el=document.createElement('div');el.className='me';meMk=new maplibregl.Marker({element:el}).setLngLat([ME.lon,ME.lat]).addTo(map)}else meMk.setLngLat([ME.lon,ME.lat]);
- banner()}
+ banner();if(view==='home'&&Date.now()-(setMe.t||0)>5e3){setMe.t=Date.now();filters();renderHome()}}
 function locate(){if(!navigator.geolocation)return toast('Position non disponible sur cet appareil.');
- navigator.geolocation.getCurrentPosition(p=>{setMe(p);back();map.flyTo({center:[ME.lon,ME.lat],zoom:14});
+ navigator.geolocation.getCurrentPosition(p=>{setMe(p);back();filters();const nr=R.filter(visible).map(r=>[r,dOf(r)]).sort((a,b)=>a[1]-b[1]).slice(0,3).filter(x=>x[1]<15000);
+   if(nr.length){const bb=new maplibregl.LngLatBounds([ME.lon,ME.lat],[ME.lon,ME.lat]);for(const [r] of nr)bb.extend([r.lon,r.lat]);map.fitBounds(bb,{padding:pad(),maxZoom:16})}else map.flyTo({center:[ME.lon,ME.lat],zoom:14});toast(nr.length?'Voilà les plus proches de toi':'Aucun resto proche avec tes filtres');
    if(watchId==null)watchId=navigator.geolocation.watchPosition(setMe,()=>{},{enableHighAccuracy:true,maximumAge:20e3})},
   e=>toast(e.code===1?'Position refusée : autorise-la dans ton navigateur.':'Position introuvable pour l\'instant.'),{enableHighAccuracy:true,timeout:10e3,maximumAge:30e3})}
 function nearest(){if(!meFresh())return null;let best=null,bd=1e9;for(const r of R){if(Math.abs(r.lat-ME.lat)>.003||Math.abs(r.lon-ME.lon)>.005)continue;const d=distM(ME.lat,ME.lon,r.lat,r.lon);if(d<bd){bd=d;best=r}}
