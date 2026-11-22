@@ -1,6 +1,6 @@
 // Rend Narabu installable et utilisable quand le réseau coupe.
 // Règle simple : on demande toujours la version la plus récente au réseau ; si le réseau ne répond pas, on sert la dernière copie gardée.
-const CACHE = 'narabu-v7';
+const CACHE = 'narabu-v8';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(
   caches.keys().then(noms => Promise.all(noms.filter(n => n !== CACHE).map(n => caches.delete(n)))).then(() => self.clients.claim())));
