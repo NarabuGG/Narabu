@@ -1,0 +1,50 @@
+rules_version = '2';
+// Règles de sécurité de la base Narabu (à coller dans Firebase > Firestore > Règles).
+// Tout le monde peut lire les infos. Pour en envoyer, il faut être connecté (connexion anonyme automatique).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /reports/{id} {
+      allow read: if true;
+      // une info = un resto, un niveau 1 à 3, l'heure du moment, et rien d'autre
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['v','r','l','z','ts','u','tg','p','g','w','q','c'])
+        && request.resource.data.u == request.auth.uid
+        && request.resource.data.r is string && request.resource.data.r.size() < 40
+        && request.resource.data.l in [1, 2, 3]
+        && request.resource.data.z in ['salle', 'drive']
+        && request.resource.data.ts is number
+        && request.resource.data.ts > request.time.toMillis() - 300000
+        && request.resource.data.ts < request.time.toMillis() + 300000
+        && request.resource.data.tg is list && request.resource.data.tg.size() <= 6
+        && request.resource.data.p in [0, 1, 2, 3, 4, 5]
+        && request.resource.data.g in [-1, 0, 1]
+        // mesures facultatives : attente chronométrée (minutes), file d'attente, personnes comptées
+        && request.resource.data.get('w', 0) is int && request.resource.data.get('w', 0) >= 0 && request.resource.data.get('w', 0) <= 90
+        && request.resource.data.get('q', 0) in [0, 1, 2, 3, 4]
+        && request.resource.data.get('c', 0) is int && request.resource.data.get('c', 0) >= 0 && request.resource.data.get('c', 0) <= 300;
+      // on ne peut modifier que les détails de sa propre info
+      allow update: if request.auth != null
+        && resource.data.u == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tg', 'p', 'q', 'c'])
+        && request.resource.data.tg is list && request.resource.data.tg.size() <= 6
+        && request.resource.data.p in [0, 1, 2, 3, 4, 5]
+        && request.resource.data.get('q', 0) in [0, 1, 2, 3, 4]
+        && request.resource.data.get('c', 0) is int && request.resource.data.get('c', 0) >= 0 && request.resource.data.get('c', 0) <= 300;
+      // ménage : seules les infos de plus de 60 jours peuvent être supprimées
+      allow delete: if request.auth != null
+        && resource.data.ts < request.time.toMillis() - 5184000000;
+    }
+    // problèmes signalés sur un resto : on peut en envoyer, personne ne peut les lire depuis le site (tu les lis dans la console Firebase)
+    match /problemes/{id} {
+      allow read: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['r', 'k', 'ts', 'u'])
+        && request.resource.data.u == request.auth.uid
+        && request.resource.data.r is string && request.resource.data.r.size() < 40
+        && request.resource.data.k in [1, 2, 3, 4, 5]
+        && request.resource.data.ts is number
+        && request.resource.data.ts > request.time.toMillis() - 300000
+        && request.resource.data.ts < request.time.toMillis() + 300000;
+    }
+  }
+}
