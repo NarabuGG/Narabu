@@ -1,4 +1,6 @@
 # Une fois par semaine : met à jour la liste des restaurants (OpenStreetMap) pour l'onglet Restaurants.
+# Source : extraits OpenStreetMap de Geofabrik (France métropolitaine + outre-mer), filtrés avec osmium.
+# (Overpass est trop souvent saturé pour une requête sur toute la France.)
 # Le site est remis en ligne par la mise à jour horaire qui suit.
 name: Liste des restaurants
 on:
@@ -16,7 +18,25 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/restaurants.py
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+      - name: Télécharge et filtre OpenStreetMap
+        run: |
+          mkdir -p /tmp/osm && cd /tmp/osm
+          for z in europe/france europe/france/guadeloupe europe/france/martinique europe/france/guyane europe/france/reunion europe/france/mayotte; do
+            n=$(basename $z)
+            echo "== $n"
+            if curl -fsSL --retry 3 --retry-delay 30 -o $n.osm.pbf "https://download.geofabrik.de/$z-latest.osm.pbf"; then
+              osmium tags-filter $n.osm.pbf nwr/amenity=restaurant -o $n-r.osm.pbf -O
+              osmium export $n-r.osm.pbf --geometry-types=point,polygon --attributes=type,id -f geojsonseq -o $n.geojsonseq -O
+              rm -f $n.osm.pbf
+              wc -l $n.geojsonseq
+            elif [ $n = france ]; then
+              echo "France introuvable : on garde l'ancienne liste"; exit 1
+            else
+              echo "  $n introuvable, on continue sans"
+            fi
+          done
+      - run: MINI=20000 python3 scripts/restaurants.py /tmp/osm/*.geojsonseq
       - run: |
           git config user.name "Narabu robot"
           git config user.email "actions@users.noreply.github.com"
