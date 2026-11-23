@@ -751,7 +751,7 @@ function rsFC(){const now=Date.now(),o=rsFrom();return{type:'FeatureCollection',
  return{type:'Feature',geometry:{type:'Point',coordinates:[r.lon,r.lat]},properties:{id:r.id,lv:st.lv,e:st.est?1:0,c:st.closed||st.off?1:0,f:fit?1:0,name:r.name,lt,lc:RLV[st.lv].c}}})}}
 function rsIdxFC(){if(!RSI)return{type:'FeatureCollection',features:[]};return{type:'FeatureCollection',features:Object.entries(RSI.t).map(([k,v])=>({type:'Feature',geometry:{type:'Point',coordinates:[v[2],v[1]]},properties:{n:v[0],k}}))}}
 function rsLayers(){if(!map||map.getSource('rs'))return;const vis=TAB==='rs'?'visible':'none',N=NUIT();
- map.addSource('rsi',{type:'geojson',data:rsIdxFC()});
+ map.addSource('rsi',{type:'geojson',data:rsIdxFC(),cluster:true,clusterMaxZoom:10,clusterRadius:42,clusterProperties:{n:['+',['get','n']]}});
  map.addSource('rs',{type:'geojson',data:rsFC(),cluster:true,clusterMaxZoom:14,clusterRadius:40});
  map.addLayer({id:'rsix',type:'circle',source:'rsi',maxzoom:10.5,layout:{visibility:vis},paint:{'circle-color':N?'#3a2b18':'#fff4e0','circle-stroke-color':'#b5651d','circle-stroke-width':1.5,'circle-radius':['interpolate',['linear'],['get','n'],1,9,100,14,1000,20,5000,27]}});
  map.addLayer({id:'rsixn',type:'symbol',source:'rsi',maxzoom:10.5,layout:{visibility:vis,'text-field':['case',['>=',['get','n'],1000],['concat',['to-string',['round',['/',['get','n'],1000]]],'k'],['to-string',['get','n']]],'text-font':[FONT],'text-size':11,'text-allow-overlap':true},paint:{'text-color':N?'#ffd9a8':'#8a3c00'}});
@@ -766,14 +766,15 @@ let rsBound=false;
 function rsBind(){if(rsBound)return;rsBound=true;
  map.on('click','rspins',e=>rsOpenR(rsById[e.features[0].properties.id],false));
  map.on('click','rscl',async e=>{const f=e.features[0];try{const z=await map.getSource('rs').getClusterExpansionZoom(f.properties.cluster_id);map.easeTo({center:f.geometry.coordinates,zoom:z+.4})}catch(_){map.easeTo({center:f.geometry.coordinates,zoom:map.getZoom()+2})}});
- map.on('click','rsix',e=>map.flyTo({center:e.features[0].geometry.coordinates,zoom:12}));
+ map.on('click','rsix',e=>{const f=e.features[0];map.flyTo({center:f.geometry.coordinates,zoom:f.properties.cluster?Math.min(map.getZoom()+2.2,11):12})});
  for(const l of ['rspins','rscl','rsix']){map.on('mouseenter',l,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',l,()=>map.getCanvas().style.cursor='')}
  map.on('moveend',()=>{if(TAB==='rs')rsLoad()})}
 function rsBuild(){if(map&&map.getSource('rs'))map.getSource('rs').setData(rsFC())}
 const FFL=['cl','cln','selc','pins'],RSL=['rsix','rsixn','rscl','rscln','rsselc','rspins'];
-function rsShow(){if(!map)return;for(const l of FFL)if(map.getLayer(l))map.setLayoutProperty(l,'visibility',TAB==='ff'?'visible':'none');for(const l of RSL)if(map.getLayer(l))map.setLayoutProperty(l,'visibility',TAB==='rs'?'visible':'none');
- document.querySelector('.legend').innerHTML=TAB==='rs'?`<span><i class="lp" style="--c:#1e9e5a"></i>Table dispo</span><span><i class="lp" style="--c:#e07b0a"></i>Un peu d'attente</span><span><i class="lp" style="--c:#d93025"></i>Plein, réserve</span><span><i class="lp" style="--c:#9aa1a9"></i>Fermé</span><span class="mut">Pâle = estimé</span>`
+function rsShow(){rsLegend();if(!map)return;for(const l of FFL)if(map.getLayer(l))map.setLayoutProperty(l,'visibility',TAB==='ff'?'visible':'none');for(const l of RSL)if(map.getLayer(l))map.setLayoutProperty(l,'visibility',TAB==='rs'?'visible':'none');}
+function rsLegend(){const el=document.querySelector('.legend');if(!el||!RS_ON)return;el.innerHTML=TAB==='rs'?`<span><i class="lp" style="--c:#1e9e5a"></i>Table dispo</span><span><i class="lp" style="--c:#e07b0a"></i>Un peu d'attente</span><span><i class="lp" style="--c:#d93025"></i>Plein, réserve</span><span><i class="lp" style="--c:#9aa1a9"></i>Fermé</span><span class="mut">Pâle = estimé</span>`
   :`<span><i class="lp" style="--c:#1e9e5a"></i>Calme</span><span><i class="lp" style="--c:#e07b0a"></i>Du monde</span><span><i class="lp" style="--c:#d93025"></i>Blindé</span><span><i class="lp" style="--c:#9aa1a9"></i>Fermé ou pas d'info</span><span class="mut">Pâle = estimé</span>`}
+if(RS_ON&&TAB==='rs')rsLegend();
 async function rsInit(){if(!RS_ON||!map)return;try{await rsPins()}catch(e){}if(!RSI){try{const x=await fetch('data/rs/index.json');RSI=x.ok?await x.json():{t:{},n:0}}catch(e){RSI={t:{},n:0}}}
  rsLayers();rsBind();rsShow();if(TAB==='rs'){rsLoad();if(!rsSel)rsHome()}rsConnect()}
 function setTab(t){if(!RS_ON||t===TAB)return;TAB=t;store.set('narabu-tab',t);if(t==='ff'){rsSetSel(null);PAUSE=null}else{setSel(null)}
