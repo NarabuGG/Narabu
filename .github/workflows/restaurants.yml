@@ -1,6 +1,6 @@
 # Une fois par semaine : met à jour la liste des restaurants (OpenStreetMap) pour l'onglet Restaurants.
-# Source : extraits OpenStreetMap de Geofabrik (France métropolitaine + outre-mer), filtrés avec osmium.
-# (Overpass est trop souvent saturé pour une requête sur toute la France.)
+# Source : extraits OpenStreetMap de Geofabrik, région par région (France métropolitaine + outre-mer),
+# téléchargés 6 par 6 et filtrés avec osmium. (Overpass est trop souvent saturé pour toute la France.)
 # Le site est remis en ligne par la mise à jour horaire qui suit.
 name: Liste des restaurants
 on:
@@ -22,20 +22,23 @@ jobs:
       - name: Télécharge et filtre OpenStreetMap
         run: |
           mkdir -p /tmp/osm && cd /tmp/osm
-          for z in europe/france europe/france/guadeloupe europe/france/martinique europe/france/guyane europe/france/reunion europe/france/mayotte; do
-            n=$(basename $z)
-            echo "== $n"
-            if curl -fsSL --retry 3 --retry-delay 30 -o $n.osm.pbf "https://download.geofabrik.de/$z-latest.osm.pbf"; then
-              osmium tags-filter $n.osm.pbf nwr/amenity=restaurant -o $n-r.osm.pbf -O
-              osmium export $n-r.osm.pbf --geometry-types=point,polygon --attributes=type,id -f geojsonseq -o $n.geojsonseq -O
-              rm -f $n.osm.pbf
-              wc -l $n.geojsonseq
-            elif [ $n = france ]; then
-              echo "France introuvable : on garde l'ancienne liste"; exit 1
-            else
-              echo "  $n introuvable, on continue sans"
+          cat > un.sh <<'FIN'
+          n=$1
+          for essai in 1 2 3; do
+            if curl -fsSL --max-time 1500 -w "$n : %{size_download} octets en %{time_total} s\n" -o $n.osm.pbf "https://download.geofabrik.de/europe/france/$n/$n-latest.osm.pbf"; then
+              osmium tags-filter $n.osm.pbf nwr/amenity=restaurant -o $n-r.osm.pbf -O &&
+              osmium export $n-r.osm.pbf --geometry-types=point,polygon --attributes=type,id -f geojsonseq -o $n.geojsonseq -O &&
+              { rm -f $n.osm.pbf; echo "$n : $(wc -l < $n.geojsonseq) restos"; exit 0; }
             fi
+            echo "$n : essai $essai raté"; sleep 30
           done
+          echo "$n : ÉCHEC"; touch $n.echec
+          FIN
+          echo alsace aquitaine auvergne basse-normandie bourgogne bretagne centre champagne-ardenne corse \
+               franche-comte haute-normandie ile-de-france languedoc-roussillon limousin lorraine midi-pyrenees \
+               nord-pas-de-calais pays-de-la-loire picardie poitou-charentes provence-alpes-cote-d-azur rhone-alpes \
+               guadeloupe martinique guyane reunion mayotte | tr ' ' '\n' | xargs -P 6 -I{} bash un.sh {}
+          ls *.echec 2>/dev/null && { echo "Des régions manquent : on garde l'ancienne liste"; exit 1; } || true
       - run: MINI=20000 python3 scripts/restaurants.py /tmp/osm/*.geojsonseq
       - run: |
           git config user.name "Narabu robot"
