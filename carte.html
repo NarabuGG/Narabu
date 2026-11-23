@@ -98,6 +98,19 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 .go a{flex:1;text-align:center;border-radius:10px;padding:11px 6px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--ink)}
 .go a:first-child{background:var(--red);border-color:var(--red);color:var(--on-red)}
 .note{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+.geoc{background:linear-gradient(135deg,#fff1e6,#ffe1cc);border:1px solid #ffc9a3;border-radius:14px;padding:12px 14px;margin:12px 0 4px;color:#3a1d07}
+[data-theme=dark] .geoc{background:linear-gradient(135deg,#3a2414,#2a1a10);border-color:#6b3a17;color:#ffe6d1}
+.geoc .nt{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:15px}
+.geoc .nx{width:30px;height:30px;border-radius:50%;background:#0000000f;font-size:18px;flex:none;margin:-4px -4px 0 0;color:inherit}
+.geoc p{margin:6px 0 10px;font-size:14px;line-height:1.4}
+.geob{width:100%;min-height:44px;border-radius:12px;background:var(--red);color:var(--on-red);font-weight:800;font-size:15px}
+.act{display:flex;gap:10px;align-items:flex-start;background:#e8f7ee;color:#0f5132;border-radius:12px;padding:9px 12px;font-size:14px;line-height:1.4;margin:6px 0 8px}
+[data-theme=dark] .act{background:#12301f;color:#b9f0cf}
+.act.act0{background:var(--soft);color:inherit}
+.act .pulse{flex:none;width:10px;height:10px;border-radius:50%;background:#1e9e5a;margin-top:5px;box-shadow:0 0 0 0 #1e9e5a88;animation:pls 1.8s infinite}
+.act0 .pulse{background:#ef8a17;box-shadow:0 0 0 0 #ef8a1788}
+@keyframes pls{70%{box-shadow:0 0 0 8px #0000}100%{box-shadow:0 0 0 0 #0000}}
+@media (prefers-reduced-motion:reduce){.act .pulse{animation:none}}
 .conn{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);margin-top:22px}
 #modal{position:fixed;inset:0;background:#0007;z-index:3000;display:none;align-items:center;justify-content:center;padding:16px}
 #modal .box{background:var(--bg);border-radius:16px;max-width:420px;width:100%;padding:22px}
@@ -150,6 +163,11 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 .conn+p a{color:inherit}
 .go a{font-size:14px}
 .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.hrow .lnk{white-space:nowrap;flex:none;margin-top:-4px}
+.tabs{display:inline-flex;flex:none;border-radius:18px;background:var(--soft);padding:3px;gap:2px;border:1px solid var(--line)}
+.tabs button{height:30px;border-radius:15px;padding:0 12px;font-weight:800;font-size:14px;color:var(--mut)}
+.tabs button[aria-selected=true]{background:var(--red);color:var(--on-red)}
+.pause{background:light-dark(#fff4e0,#2b2215);border:1px solid light-dark(#f3d4a5,#4a3a22);border-radius:12px;padding:10px 12px;margin:10px 0 4px}
+.row small.plan{font-size:12px;color:var(--mut);margin-top:2px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -223,8 +241,8 @@ const ago=ts=>{const m=Math.round((Date.now()-ts)/60e3);return m<1?'à l\'instan
 let THEME=store.get('foodloc-theme');if(THEME==='tomate')THEME='jour';{const de=document.documentElement;if(THEME!=='nuit'&&THEME!=='jour')THEME=de.dataset.theme==='dark'||(!de.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches)?'nuit':'jour';de.dataset.theme=THEME==='nuit'?'dark':'light'}
 const NUIT=()=>THEME==='nuit',thBtn=()=>`<button class="lnk" data-th="${NUIT()?'jour':'nuit'}">${NUIT()?'Mode jour':'Mode nuit'}</button>`;
 async function setTheme(t){if(t===THEME)return;THEME=t;store.set('foodloc-theme',t);document.documentElement.dataset.theme=NUIT()?'dark':'light';
- if(map){const st=await pickStyle();map.once('style.load',async()=>{try{await addPins()}catch(e){}addRestos();setSel(sel)});map.setStyle(st,{diff:false})}
- view==='detail'?renderDetail():renderHome()}
+ if(map){const st=await pickStyle();map.once('style.load',async()=>{try{await addPins()}catch(e){}addRestos();setSel(sel);if(RS_ON){try{await rsPins()}catch(e){}rsLayers();rsShow()}});map.setStyle(st,{diff:false})}
+ view==='detail'?renderDetail():view==='rsdetail'?rsDetail():renderHome()}
 /* réglages (config.js) : base Firebase, type de carte, météo, position */
 const CFG=Object.assign({firebase:null,carte:'openfreemap',meteo:true,position:true,photo:false},window.FOODLOC_CONFIG||{}),ART=typeof claude!=='undefined'&&!!claude.use;
 let LEARNED=null,WX={},ME=null,meMk=null,watchId=null;const asked={},DEPC={};
@@ -333,20 +351,21 @@ function addRestos(){map.addSource('r',{type:'geojson',data:fc(),cluster:true,cl
 function rebuild(){if(map&&map.getSource('r'))map.getSource('r').setData(fc());filters();if(view==='home')renderHome()}
 
 function hint(){const h=$('hint');if(!map||$('near').style.display==='block'){h.style.display='none';return}const z=map.getZoom();let t='';
- if(view==='detail')t='';else if(z<11)t=innerWidth<600?'Clique sur un rond pour zoomer':'Clique sur un rond numéroté pour zoomer, ou cherche ta ville';else t=innerWidth<600?'Clique sur un resto':'Clique sur un resto pour voir s\'il y a du monde';
+ if(view==='detail'||view==='rsdetail')t='';else if(TAB==='rs')t=z<10.5?'Zoome ou cherche ta ville':innerWidth<600?'Clique sur un restaurant':'Clique sur un restaurant pour voir tes chances d\'avoir une table';else if(z<11)t=innerWidth<600?'Clique sur un rond pour zoomer':'Clique sur un rond numéroté pour zoomer, ou cherche ta ville';else t=innerWidth<600?'Clique sur un resto':'Clique sur un resto pour voir s\'il y a du monde';
  h.textContent=t;h.style.display=t?'block':'none'}
 
 /* filtres */
 function selName(){const k=F.sel;if(!k)return'';const c=Object.keys(CATS).find(c=>brOf(c).join()===k.join());return c?CATS[c].n:k.length===1?BR[k[0]].n:k.map(x=>BR[x].n).join(', ')}
-function filters(){const same=c=>F.sel&&brOf(c).join()===F.sel.join(),custom=F.sel&&!Object.keys(CATS).some(same);
- $('filters').innerHTML=(CFG.position&&!ART&&navigator.geolocation?`<button class="f me-f" data-f="me" aria-pressed="${!!ME}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Près de moi</button>`:'')+(custom?`<button class="f" data-f="all" aria-pressed="true" aria-label="Retirer le filtre ${esc(selName())}">${F.sel.length===1?badge(F.sel[0],0):''}${esc(selName())}<span class="x">×</span></button>`:'')
+function filters(){if(TAB==='rs'){$('filters').innerHTML=rsFilters();return}const same=c=>F.sel&&brOf(c).join()===F.sel.join(),custom=F.sel&&!Object.keys(CATS).some(same);
+ $('filters').innerHTML=rsTabs()+(CFG.position&&!ART&&navigator.geolocation?`<button class="f me-f" data-f="me" aria-pressed="${!!ME}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Près de moi</button>`:'')+(custom?`<button class="f" data-f="all" aria-pressed="true" aria-label="Retirer le filtre ${esc(selName())}">${F.sel.length===1?badge(F.sel[0],0):''}${esc(selName())}<span class="x">×</span></button>`:'')
   +`<button class="f" data-f="all" aria-pressed="${!F.sel}">Tout</button>`
   +Object.entries(CATS).map(([c,v])=>`<button class="f" data-f="c-${c}" aria-pressed="${!!same(c)}">${v.n}</button>`).join('')
   +`<button class="f" data-f="pick">Une enseigne…</button><button class="f" data-f="open" aria-pressed="${F.open}">Ouvert maintenant</button>`}
 function setSelB(list,msg){F.sel=list&&list.length&&list.length<Object.keys(BR).length?[...list].sort((a,b)=>Object.keys(BR).indexOf(a)-Object.keys(BR).indexOf(b)):null;rebuild();
  if(F.sel&&map){const b=map.getBounds(),vis=R.filter(visible);if(!vis.some(r=>b.contains([r.lon,r.lat]))&&vis.length){const bb=new maplibregl.LngLatBounds();for(const r of vis)bb.extend([r.lon,r.lat]);map.fitBounds(bb,{padding:pad(),maxZoom:13})}}
  $('filters').scrollLeft=0;if(msg)toast(F.sel?`Seulement ${selName()} sur la carte`:'Toutes les enseignes sur la carte')}
-$('filters').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;const k=b.dataset.f;
+$('filters').addEventListener('click',e=>{const tb=e.target.closest('[data-tab]');if(tb)return setTab(tb.dataset.tab);const b=e.target.closest('[data-f]');if(!b)return;const k=b.dataset.f;
+ if(TAB==='rs')return rsFilterClick(k);
  if(k==='me')return locate();
  if(k==='open'){F.open=!F.open;return rebuild()}
  if(k==='all')return setSelB(null,!!F.sel);
@@ -370,6 +389,7 @@ function townsOf(q){return q.length<2?[]:TOWNS.filter(t=>t.key.startsWith(q)||t.
 function search(force){const q=norm($('q').value),box=$('res');$('clr').style.display=q?'block':'none';
  if(q.length<2&&!(force===true||(!q&&document.activeElement===$('q')&&force!==false))){box.style.display='none';return}
  let i=0,h='';hits=[];
+ if(TAB==='rs')return rsSearch(q);
  if(!q){hits=Object.keys(BR).map(k=>({t:'br',set:[k]}));
   h='<div class="h">Choisis une enseigne</div>'+(F.sel?`<button data-i="-1"><span class="mini" style="background:#5f6670">✓</span><span><b>Toutes les enseignes</b></span></button>`:'')
    +hits.map(x=>`<button data-i="${i++}">${setIcon(x)}<span><b>${esc(setName(x))}</b><br><small class="mut">${cntOf(x.set)} restos</small></span>${F.sel&&F.sel.join()===x.set.join()?'<span class="act">Affichée</span>':''}</button>`).join('');
@@ -389,6 +409,8 @@ function search(force){const q=norm($('q').value),box=$('res');$('clr').style.di
  if(rs.length&&(!P.set||P.rest))h+='<div class="h">Restos</div>'+rs.map(r=>{hits.push({t:'r',v:r});return `<button data-i="${i++}">${stBadge(r)}<span><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><br><small class="mut">${esc(r.cp)} ${esc(r.city)}</small></span></button>`}).join('');
  box.innerHTML=h||'<div class="h" style="padding:14px">Rien trouvé. Essaie une ville, un code postal ou une enseigne (Quick, O\'Tacos…).</div>';box.style.display='block'}
 function pick(x){$('res').style.display='none';$('q').value='';$('clr').style.display='none';$('q').blur();
+ if(x&&x.t==='rsr')return rsOpenR(x.v,true);
+ if(x&&x.t==='rst'){RF.ty=x.v;filters();rsBuild();return rsHome()}
  if(!x){return setSelB(null,true)}
  if(x.t==='r')return openR(x.v,true);
  $('panel').scrollTop=0;
@@ -422,13 +444,29 @@ function nearBox(){if(!ME)return'';const l=R.filter(visible).map(r=>[r,dOf(r)]).
  const what=F.sel?selName():'Fast-foods';
  return `<h3 style="margin-top:14px">${esc(what)} près de toi</h3>`+(l.length?l.map(([r,d])=>`<button class="row" data-r="${r.id}">${stBadge(r)}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small>${stTxt(r.st)}</small></span><span class="dist"><b>${dTxt(d)}</b>${walkTxt(d)?'<small>'+walkTxt(d)+'</small>':''}</span></button>`).join(''):'<p class="note">Aucun resto à moins de 15 km avec tes filtres.</p>')}
 function rowLive(r){const c=crowd(r.id);if(!c)return'';const lv=lvOf(c.b);return `<button class="row" data-r="${r.id}">${badge(r.b,lv,'s')}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small><span style="color:${LV[lv].c};font-weight:800">${LV[lv].n}</span> · ${ago(c.last)} · ${esc(r.city)}</small></span></button>`}
-function renderHome(){view='home';const z=map?map.getZoom():0;let h='';
+/* activité : montrer que d'autres se servent de Narabu (infos du jour, visites du jour, gens en ce moment) */
+const ACT={j:null,vis:null,t:0};
+function parisMidnight(){const n=new Date(),o={};for(const x of new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(n))o[x.type]=+x.value;return n.getTime()-((o.hour*60+o.minute)*60+o.second)*1e3-n.getMilliseconds()}
+async function actLoad(force){if(!CFG.firebase||ART||(!force&&Date.now()-ACT.t<4*60e3))return;ACT.t=Date.now();const f=CFG.firebase,B=`https://firestore.googleapis.com/v1/projects/${f.projectId}/databases/(default)/documents`,jour=new Intl.DateTimeFormat('fr-CA',{timeZone:'Europe/Paris'}).format(new Date());
+ try{const [a,b]=await Promise.all([fetch(`${B}:runAggregationQuery?key=${f.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredAggregationQuery:{structuredQuery:{from:[{collectionId:'reports'}],where:{fieldFilter:{field:{fieldPath:'ts'},op:'GREATER_THAN_OR_EQUAL',value:{integerValue:String(parisMidnight())}}}},aggregations:[{alias:'n',count:{}}]}})}).then(r=>r.ok?r.json():null).catch(()=>null),
+   fetch(`${B}/stats/${jour}?key=${f.apiKey}`).then(r=>r.ok?r.json():null).catch(()=>null)]);
+  const n=a&&a[0]&&a[0].result&&a[0].result.aggregateFields&&a[0].result.aggregateFields.n;if(n)ACT.j=+n.integerValue||0;
+  if(b&&b.fields)ACT.vis=+((b.fields.c||{}).integerValue||0);if(view==='home'&&TAB!=='rs')renderHome()}catch(e){}}
+setInterval(()=>{if(!document.hidden)actLoad()},5*60e3);
+function actBox(){const now=Date.now(),me=uid||'moi',rec=reports.filter(x=>now-x.ts<WIN&&byId[x.r]),ppl=new Set(rec.map(x=>x.u||x.r+x.ts)).size,rs=new Set(rec.map(x=>x.r)).size,
+  j=Math.max(ACT.j||0,reports.filter(x=>x.ts>=parisMidnight()).length),s=n=>n>1?'s':'',bits=[];
+ if(rec.length)bits.push(`<b>${ppl} personne${s(ppl)}</b> ${ppl>1?'ont':'a'} donné une info sur <b>${rs} resto${s(rs)}</b> ces 90 dernières minutes`);
+ if(j)bits.push(`<b>${j} info${s(j)}</b> envoyée${s(j)} aujourd'hui`);
+ if(ACT.vis>=20)bits.push(`<b>${ACT.vis} personnes</b> ont regardé la carte aujourd'hui`);
+ if(!bits.length)return `<div class="act act0"><i class="pulse"></i><span>Personne n'a encore donné d'info aujourd'hui. Sois le premier : 1 clic sur un fast-food où tu es.</span></div>`;
+ return `<div class="act"><i class="pulse"></i><span>${bits.join(' · ')}</span></div>`}
+function renderHome(){if(TAB==='rs')return rsHome();view='home';const z=map?map.getZoom():0;let h='';
  if(z>=10.5){const b=map.getBounds(),ctr=map.getCenter(),dist=r=>ctr.distanceTo(new maplibregl.LngLat(r.lon,r.lat)),conf=r=>r.st.cur&&!r.st.est?1:0;const list=R.filter(r=>visible(r)&&b.contains([r.lon,r.lat]));
   list.sort((a,b)=>(conf(b)-conf(a))||dist(a)-dist(b));
-  h+=`<div class="hrow"><h2>${list.length} resto${list.length>1?'s':''} ici</h2>${thBtn()}</div>${srcBox()}${nearBox()}${ME?'<h3>Sur la carte</h3>':''}`+(list.length?list.slice(0,60).map(r=>rowR(r)).join(''):'<p class="note">Aucun resto dans cette zone avec tes filtres.</p>')+(list.length>60?'<p class="mut">Zoome pour voir les autres.</p>':'')}
- else{h+=`<div class="hrow"><h2>Il y a du monde ?</h2>${thBtn()}</div><p class="mut" style="margin:0">Choisis une ville ou zoome sur la carte.</p>${srcBox()}${nearBox()}<h3>Villes</h3><div class="cities">${QUICK.filter(n=>bestTown(n)).map(n=>`<button data-c="${n}">${n}</button>`).join('')}</div>`}
+  h+=`<div class="hrow"><h2>${list.length} resto${list.length>1?'s':''} ici</h2>${thBtn()}</div>${geoCard()}${srcBox()}${nearBox()}${ME?'<h3>Sur la carte</h3>':''}`+(list.length?list.slice(0,60).map(r=>rowR(r)).join(''):'<p class="note">Aucun resto dans cette zone avec tes filtres.</p>')+(list.length>60?'<p class="mut">Zoome pour voir les autres.</p>':'')}
+ else{h+=`<div class="hrow"><h2>Il y a du monde ?</h2>${thBtn()}</div><p class="mut" style="margin:0">Choisis une ville ou zoome sur la carte.</p>${geoCard()}${srcBox()}${nearBox()}<h3>Villes</h3><div class="cities">${QUICK.filter(n=>bestTown(n)).map(n=>`<button data-c="${n}">${n}</button>`).join('')}</div>`}
  const now=Date.now(),hot=[...new Set(reports.filter(x=>now-x.ts<WIN&&byId[x.r]).sort((a,b)=>b.ts-a.ts).map(x=>x.r))].slice(0,8);
- h+=`<h3>En direct, par les gens</h3>`+(hot.length?hot.map(id=>rowLive(byId[id])).join(''):'<p class="note">Personne n\'a encore donné d\'info ces 90 dernières minutes. Tu es dans un fast-food ? Clique dessus et dis-le.</p>');
+ const ab=actBox();h+=`<h3>En direct, par les gens</h3>${ab}`+(hot.length?hot.map(id=>rowLive(byId[id])).join(''):ab.includes('act0')?'':'<p class="note">Rien ces 90 dernières minutes. Tu es dans un fast-food ? Clique dessus et dis-le.</p>');
  h+=ptsBox();
  if(deferred)h+=`<p style="margin:14px 0 0"><button class="chip" data-inst>Installer l'appli sur ce téléphone</button></p>`;
  h+=conn();$('pin').innerHTML=h;hint()}
@@ -505,10 +543,11 @@ function setPanel(st){const p=$('panel');p.classList.remove('drag');p.style.heig
  h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end)})();
 function openR(r,fly){if(sel!==r)probOpen=false;setSel(r);setHash('#r-'+r.id);zone='salle';document.body.classList.add('det');renderDetail();$('panel').scrollTop=0;setPanel('big');
  const mob=innerWidth<=820;if(fly||mob)map.flyTo({center:[r.lon,r.lat],zoom:fly?Math.max(map.getZoom(),15):map.getZoom(),offset:[0,mob?-map.getContainer().clientHeight*.3:0],duration:700})}
-function back(){setSel(null);setHash('');setPanel('mid');document.body.classList.remove('det');renderHome()}
+function back(){if(TAB==='rs')return rsBack();setSel(null);setHash('');setPanel('mid');document.body.classList.remove('det');renderHome()}
 $('panel').addEventListener('click',e=>{const t=e.target;
  if(t.closest('#handle')){if(!dragged)setPanel(PS[($('panel').classList.contains('reduit')?0:$('panel').classList.contains('big')?2:1)+1]||'mini');dragged=false;return}
  if($('panel').classList.contains('reduit'))return setPanel('mid');
+ if(TAB==='rs'&&rsClick(t))return;
  if(t.closest('#backBtn'))return back();
  const sb=t.closest('[data-s]');if(sb){SRC=sb.dataset.s;store.set('foodloc-src',SRC);return refresh()}
  const rr=t.closest('[data-r]');if(rr)return openR(byId[rr.dataset.r],true);
@@ -522,6 +561,8 @@ $('panel').addEventListener('click',e=>{const t=e.target;
  const th=t.closest('[data-th]');if(th)return setTheme(th.dataset.th);
  if(t.closest('[data-share]')){e.preventDefault();return share(sel)}
  const pk=t.closest('[data-pk]');if(pk)return sendProb(+pk.dataset.pk);
+ if(t.closest('[data-geo]'))return geoOn();
+ if(t.closest('[data-gx]')){store.set('narabu-geo-x','1');return renderHome()}
  if(t.closest('[data-inst]')&&deferred){deferred.prompt();deferred=null;return renderHome()}
  const l=t.closest('[data-l]');if(l&&!l.disabled)send(+l.dataset.l)});
 /* ===== position, météo (uniquement sur le vrai site : la page claude.ai n'y a pas droit) ===== */
@@ -531,12 +572,23 @@ const meFresh=()=>ME&&Date.now()-ME.ts<3*60e3;
 const geoFlag=r=>{if(!meFresh())return 0;const d=distM(ME.lat,ME.lon,r.lat,r.lon);return d<=200?1:d>500?-1:0};
 function setMe(p){ME={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy||0,ts:Date.now()};
  if(!meMk){const el=document.createElement('div');el.className='me';meMk=new maplibregl.Marker({element:el}).setLngLat([ME.lon,ME.lat]).addTo(map)}else meMk.setLngLat([ME.lon,ME.lat]);
- banner();if(view==='home'&&Date.now()-(setMe.t||0)>5e3){setMe.t=Date.now();filters();renderHome()}}
+ banner();if(TAB==='rs'&&PAUSE)rsBuild();if(view==='home'&&Date.now()-(setMe.t||0)>5e3){setMe.t=Date.now();filters();renderHome()}}
 function locate(){if(!navigator.geolocation)return toast('Position non disponible sur cet appareil.');
- navigator.geolocation.getCurrentPosition(p=>{setMe(p);back();filters();const nr=R.filter(visible).map(r=>[r,dOf(r)]).sort((a,b)=>a[1]-b[1]).slice(0,3).filter(x=>x[1]<15000);
+ navigator.geolocation.getCurrentPosition(p=>{setMe(p);back();filters();if(TAB==='rs'){map.flyTo({center:[ME.lon,ME.lat],zoom:15.5});toast('Voilà les restaurants autour de toi');if(watchId==null)watchId=navigator.geolocation.watchPosition(setMe,()=>{},{enableHighAccuracy:true,maximumAge:20e3});return}const nr=R.filter(visible).map(r=>[r,dOf(r)]).sort((a,b)=>a[1]-b[1]).slice(0,3).filter(x=>x[1]<15000);
    if(nr.length){const bb=new maplibregl.LngLatBounds([ME.lon,ME.lat],[ME.lon,ME.lat]);for(const [r] of nr)bb.extend([r.lon,r.lat]);map.fitBounds(bb,{padding:pad(),maxZoom:16})}else map.flyTo({center:[ME.lon,ME.lat],zoom:14});toast(nr.length?'Voilà les plus proches de toi':'Aucun resto proche avec tes filtres');
    if(watchId==null)watchId=navigator.geolocation.watchPosition(setMe,()=>{},{enableHighAccuracy:true,maximumAge:20e3})},
   e=>toast(e.code===1?'Position refusée : autorise-la dans ton navigateur.':'Position introuvable pour l\'instant.'),{enableHighAccuracy:true,timeout:10e3,maximumAge:30e3})}
+/* position : si elle est déjà autorisée, on la suit sans rien demander (la question « Tu es au … ? » arrive toute seule) */
+let GEO='?';
+function startWatch(){if(watchId==null&&navigator.geolocation)watchId=navigator.geolocation.watchPosition(setMe,e=>{if(e.code===1){GEO='denied';if(view==='home')renderHome()}},{enableHighAccuracy:true,maximumAge:20e3})}
+/* l'état de l'autorisation est lu tout de suite (sans rien demander) ; le suivi démarre une fois la carte prête */
+const geoState=(async()=>{if(!navigator.geolocation||!CFG.position||ART)return GEO='denied';
+ try{const p=await navigator.permissions.query({name:'geolocation'});GEO=p.state;p.onchange=()=>{GEO=p.state;if(GEO==='granted')startWatch();if(view==='home'&&TAB!=='rs')renderHome()}}catch(e){GEO='prompt'}return GEO})();
+async function geoAuto(){await geoState;if(GEO==='granted')startWatch();if(view==='home'&&TAB!=='rs')renderHome()}
+function geoOn(){navigator.geolocation.getCurrentPosition(p=>{GEO='granted';setMe(p);startWatch();toast('Position activée ✓');renderHome()},
+ e=>{if(e.code===1)GEO='denied';toast(e.code===1?'Position refusée : tu peux l\'autoriser plus tard dans ton navigateur.':'Position introuvable pour l\'instant.');renderHome()},{enableHighAccuracy:true,timeout:10e3,maximumAge:30e3})}
+const geoCard=()=>ME||GEO!=='prompt'||mode==='ro'||!CFG.position||ART||store.get('narabu-geo-x')?'':
+ `<div class="geoc"><div class="nt"><b>📍 Donne l'info en 1 clic</b><button class="nx" data-gx aria-label="Masquer">×</button></div><p>Active ta position : quand tu es dans un fast-food, Narabu te demande s'il y a du monde. Un clic et c'est partagé avec tout le monde.</p><button class="geob" data-geo>Activer ma position</button><p class="mut" style="font-size:12px;margin:6px 0 0">Ta position reste sur ton téléphone, elle n'est jamais envoyée.</p></div>`;
 function nearest(){if(!meFresh())return null;let best=null,bd=1e9;for(const r of R){if(Math.abs(r.lat-ME.lat)>.003||Math.abs(r.lon-ME.lon)>.005)continue;const d=distM(ME.lat,ME.lon,r.lat,r.lon);if(d<bd){bd=d;best=r}}
  return best&&bd<=Math.max(90,Math.min(ME.acc,150))?best:null}
 /* si tu es dans un resto, l'appli te pose la question : 1 clic et c'est envoyé */
@@ -657,6 +709,213 @@ async function connect(){
   db.collection('reports').orderBy('ts','desc').limit(1500).get().then(s=>{hist=s.docs.map(d=>clean(d.data(),d.id)).filter(Boolean);learn();refresh()}).catch(()=>{})}
  catch(e){clearTimeout(t);local()}}
 
+/* ===== onglet Restaurants : chances d'avoir une table sans réserver, chrono du service, ma pause déj ===== */
+/* liste : OpenStreetMap (© les contributeurs, ODbL), découpée en cases chargées à la demande (data/rs/) */
+const RS_ON=!!window.NARABU_RS||CFG.restos!==false;
+let TAB=RS_ON&&store.get('narabu-tab')==='rs'?'rs':'ff';
+const RT={fr:'Français',it:'Pizza & italien',cr:'Crêperie',as:'Asiatique',mo:'Monde',au:'Restaurant'};
+const RTF=['fr','it','cr','as','mo'];
+const RF={ty:null,open:false,ok:false};let PAUSE=null,rsSel=null,RSI=null,rsRep=[],rsLocal=false;
+const rsTiles=new Map(),rsById={},rsSvc=new Map(),rsSvcAsked=new Set();
+ICO.rs='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2c.6 0 1 .4 1 1v6.2a2.6 2.6 0 0 0 1.6-2.4V3a1 1 0 1 1 2 0v3.8A4.6 4.6 0 0 1 9 10.9V21a1 1 0 1 1-2 0V10.9a4.6 4.6 0 0 1-2.6-4.1V3a1 1 0 1 1 2 0v3.8c0 1 .6 2 1.6 2.4V3c0-.6.4-1 1-1zm10 0c1.7 0 3 2.2 3 6 0 2.3-.9 3.9-2 4.6V21a1 1 0 1 1-2 0V3c0-.6.4-1 1-1z"/></svg>';
+BG.rs='#fff4e0';FG.rs='#8a3c00';
+const RLV=[{n:'Pas d\'info',c:'#8d959e'},{n:'Bonnes chances',s:'Table sans réserver, en principe',c:'#1e9e5a'},{n:'Chances moyennes',s:'Un peu d\'attente possible',c:'#e07b0a'},{n:'Faibles, réserve',s:'Souvent plein à cette heure-là',c:'#d93025'}];
+
+/* horaires OpenStreetMap, version tolérante : « 12:00-14:00,19:00-22:00 » sans jours, « PH off », etc. */
+function rsParseOH(s){if(!s)return null;s=s.trim();if(s==='24/7')return '24/7';const w=Array.from({length:7},()=>[]);let any=false;
+ for(let rule of s.split(';')){rule=rule.trim();if(!rule)continue;
+  if(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|week|easter|sunrise|sunset)\b/.test(rule))continue;
+  const m=rule.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su|PH|SH)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?\s*,?\s*)+)(.*)$/);
+  let dp='',tm=rule;if(m&&m[1].trim()){dp=m[1];tm=m[2]}
+  const days=[];if(!dp)days.push(0,1,2,3,4,5,6);else for(const p of dp.split(',')){const q=p.replace(/\s/g,'');if(!q||q==='PH'||q==='SH')continue;const [a,b]=q.split('-');const i=ORD.indexOf(a),j=b?ORD.indexOf(b):i;if(i<0||j<0)continue;for(let k=i;;k=(k+1)%7){days.push(DAYS.indexOf(ORD[k]));if(k===j)break}}
+  if(!days.length)continue;tm=tm.trim();let rg;
+  if(/^(off|closed)/i.test(tm))rg=[];else{rg=[...tm.matchAll(/(\d{1,2}):(\d\d)\s*-\s*(\d{1,2}):(\d\d)/g)].map(x=>[+x[1]*60+ +x[2],+x[3]*60+ +x[4]]);if(!rg.length)continue}
+  for(const d of days)w[d]=rg;any=true}
+ return any?w:null}
+
+/* une case de la carte = un fichier ; les grandes villes sont coupées en petites cases */
+const rsKey=(lon,lat)=>`${Math.floor(lon/.25)}_${Math.floor(lat/.25)}`;
+const rsSubKey=(lon,lat)=>`s${Math.floor(lon/.05+1e-9)}_${Math.floor(lat/.05+1e-9)}`;
+function rsMake(a,tile){const [lat,lon,name,ty,oh,res,opt,addr,cp,city,tel,web,lab,id]=a;
+ const r={id:'rs'+id,osm:id,lat,lon,name,ty,oh,res,opt,addr,cp,city,tel,web,lab,tile,rs:1};r._oh=rsParseOH(oh);r.key=' '+norm([name,lab,RT[ty],city,cp].join(' '))+' ';return r}
+function rsGet(k){if(!rsTiles.has(k))rsTiles.set(k,fetch(`data/rs/${k}.json`).then(x=>{if(!x.ok)throw 0;return x.json()}).then(a=>{const l=a.map(x=>rsMake(x,k));for(const r of l)rsById[r.id]=r;rsAskSvc(k);return l}).catch(()=>[]));return rsTiles.get(k)}
+let rsCur=[],rsBusy=0;
+async function rsLoad(){if(TAB!=='rs'||!map||!RSI)return;const z=map.getZoom();if(z<10.5){rsCur=[];rsBuild();return}
+ const b=map.getBounds(),w=b.getWest()-.02,e=b.getEast()+.02,s=b.getSouth()-.02,n=b.getNorth()+.02,keys=[];
+ for(let x=Math.floor(w/.25);x<=Math.floor(e/.25);x++)for(let y=Math.floor(s/.25);y<=Math.floor(n/.25);y++){const k=`${x}_${y}`,t=RSI.t[k];if(!t)continue;
+  if(!t[3]){keys.push(k);continue}
+  for(let sx=Math.max(Math.floor(w/.05+1e-9),x*5);sx<=Math.min(Math.floor(e/.05+1e-9),x*5+4);sx++)for(let sy=Math.max(Math.floor(s/.05+1e-9),y*5);sy<=Math.min(Math.floor(n/.05+1e-9),y*5+4);sy++)keys.push(`s${sx}_${sy}`)}
+ if(keys.length>60){rsCur=[];rsBuild();return}
+ const my=++rsBusy,ls=await Promise.all(keys.map(rsGet));if(my!==rsBusy)return;rsCur=ls.flat();rsBuild();if(view==='home'&&TAB==='rs')rsHome()}
+
+/* estimation : jour, heure, resto connu ou pas, réservation conseillée, centre-ville */
+function rsDemand(r,d){const h=d.getHours()+d.getMinutes()/60,w=d.getDay();
+ const lp=[.9,.7,.7,.7,.72,.75,.78][w],dp=[.5,.45,.5,.55,.68,.92,.95][w];
+ let v=Math.max(lp*Math.exp(-(((h-12.75)/.85)**2)),dp*Math.exp(-(((h-20.4)/1.15)**2)));
+ if(r.opt&4)v+=.15;if(r.res===2)v+=.1;if(r.res===4)v+=.05;const t=RSI&&RSI.t[r.tile]?0:1;if(t||String(r.tile).startsWith('s'))v+=.04;
+ return Math.min(1.1,v)}
+const rsMeal=d=>{const h=d.getHours()+d.getMinutes()/60;return (h>=11.5&&h<15)||(h>=18.5&&h<23.5)};
+const rsService=d=>d.getHours()<16?'midi':'soir';
+function rsLive(r,now=Date.now()){const d=new Date(now),sv=rsService(d),day=ymd(d);let best=null;
+ for(const x of rsRep){if(x.r!==r.id||x.k!=='tab')continue;const age=now-x.ts;
+  const ok=x.via==='appel'&&x.s==='complet'&&x.sv?(ymd(new Date(x.ts))===day&&x.sv===sv):age<2*3600e3;
+  if(ok&&(!best||x.ts>best.ts))best=x}
+ return best}
+function rsState(r,now=Date.now()){const d=new Date(now),oh=openNow(r,d);
+ if(oh&&!oh.o)return{lv:0,closed:true,oh};
+ if(!oh&&!rsMeal(d))return{lv:0,off:true,oh};
+ const x=rsLive(r,now);
+ if(x){if(x.s==='complet')return{lv:3,full:true,live:x,wait:null,oh};if(x.s==='direct')return{lv:1,live:x,wait:0,oh};const m=x.m||10;return{lv:m<=12?2:3,live:x,wait:m,oh}}
+ if(r.res===3)return{lv:3,req:true,est:true,wait:null,oh};
+ const v=rsDemand(r,d),lv=v<.5?1:v<.75?2:3;return{lv,est:true,v,wait:[0,0,8,25][lv],oh}}
+/* temps par défaut : le midi on va plus vite que le soir ; un resto connu prend un peu plus son temps */
+const RSVC={fr:15,it:12,cr:10,as:10,mo:12,au:15},REAT={fr:25,it:20,cr:20,as:15,mo:20,au:20};
+const soir=()=>new Date().getHours()>=16;
+function svcOf(r){const a=rsSvc.get(r.id);if(a&&a.length>=2){const s=[...a].sort((x,y)=>x-y);return{m:s[Math.floor(s.length/2)],n:a.length}}return{m:RSVC[r.ty]+(r.opt&4?5:0)+(soir()?5:0),n:a?a.length:0}}
+const eatOf=r=>REAT[r.ty]+(r.opt&4?10:0)+(soir()?20:0);
+const rsWhy=(r,st)=>{if(st.live)return st.live.via==='appel'?`Quelqu'un a appelé ${ago(st.live.ts)}`:`Info des gens · ${ago(st.live.ts)}`;
+ if(st.req)return'Réservation obligatoire d\'après la fiche du resto';const d=new Date(),w=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][d.getDay()],l=[`${w} ${rsService(d)}`];
+ if(r.opt&4)l.push('resto connu');if(r.res===2)l.push('réservation conseillée');return'Estimation : '+l.join(', ')};
+
+/* ma pause déj : marche aller-retour + attente + service + repas */
+function rsFrom(){if(ME)return{lat:ME.lat,lon:ME.lon,me:true};const c=map?map.getCenter():{lat:46.6,lng:2.4};return{lat:c.lat,lon:c.lng,me:false}}
+function rsPlan(r,st,o){if(st.closed||st.off||st.full||st.req)return null;const d=distM(o.lat,o.lon,r.lat,r.lon)*1.25,walk=Math.max(1,Math.round(d/80)),svc=svcOf(r).m,eat=eatOf(r),wait=st.wait||0;
+ return{walk,wait,svc,eat,tot:walk*2+wait+svc+eat,d}}
+const rsFits=(r,st,o)=>{if(!PAUSE)return true;const p=rsPlan(r,st,o);return!!p&&p.tot<=PAUSE};
+
+/* épingles */
+async function rsPins(){for(const [lv,e] of [[0,0],[1,0],[2,0],[3,0],[1,1],[2,1],[3,1]]){const k=`rs-${lv}${e?'e':''}`;if(!map.hasImage(k))map.addImage(k,await loadImg(pinSVG('rs',lv,e)),{pixelRatio:2})}}
+const rsVis=r=>(!RF.ty||RF.ty===r.ty)&&(!RF.open||(r.st&&!r.st.closed&&!r.st.off))&&(!RF.ok||(r.st&&r.st.lv===1));
+function rsFC(){const now=Date.now(),o=rsFrom();return{type:'FeatureCollection',features:rsCur.map(r=>{r.st=rsState(r,now);return r}).filter(rsVis).map(r=>{const st=r.st,fit=rsFits(r,st,o);
+ const lt=st.closed?'Fermé':st.off?'':st.full?'Complet ✓':st.req?'Sur réservation':st.live?(st.live.s==='direct'?'Table dispo ✓':`Attente ${st.wait} min ✓`):RLV[st.lv].n;
+ return{type:'Feature',geometry:{type:'Point',coordinates:[r.lon,r.lat]},properties:{id:r.id,lv:st.lv,e:st.est?1:0,c:st.closed||st.off?1:0,f:fit?1:0,name:r.name,lt,lc:RLV[st.lv].c}}})}}
+function rsIdxFC(){if(!RSI)return{type:'FeatureCollection',features:[]};return{type:'FeatureCollection',features:Object.entries(RSI.t).map(([k,v])=>({type:'Feature',geometry:{type:'Point',coordinates:[v[2],v[1]]},properties:{n:v[0],k}}))}}
+function rsLayers(){if(!map||map.getSource('rs'))return;const vis=TAB==='rs'?'visible':'none',N=NUIT();
+ map.addSource('rsi',{type:'geojson',data:rsIdxFC(),cluster:true,clusterMaxZoom:10,clusterRadius:42,clusterProperties:{n:['+',['get','n']]}});
+ map.addSource('rs',{type:'geojson',data:rsFC(),cluster:true,clusterMaxZoom:14,clusterRadius:40});
+ map.addLayer({id:'rsix',type:'circle',source:'rsi',maxzoom:10.5,layout:{visibility:vis},paint:{'circle-color':N?'#3a2b18':'#fff4e0','circle-stroke-color':'#b5651d','circle-stroke-width':1.5,'circle-radius':['interpolate',['linear'],['get','n'],1,9,100,14,1000,20,5000,27]}});
+ map.addLayer({id:'rsixn',type:'symbol',source:'rsi',maxzoom:10.5,layout:{visibility:vis,'text-field':['case',['>=',['get','n'],1000],['concat',['to-string',['round',['/',['get','n'],1000]]],'k'],['to-string',['get','n']]],'text-font':[FONT],'text-size':11,'text-allow-overlap':true},paint:{'text-color':N?'#ffd9a8':'#8a3c00'}});
+ map.addLayer({id:'rscl',type:'circle',source:'rs',minzoom:10.5,filter:['has','point_count'],layout:{visibility:vis},paint:{'circle-color':N?'#3a2b18':'#fff4e0','circle-radius':['step',['get','point_count'],16,10,19,100,23],'circle-stroke-color':'#b5651d','circle-stroke-width':1.5}});
+ map.addLayer({id:'rscln',type:'symbol',source:'rs',minzoom:10.5,filter:['has','point_count'],layout:{visibility:vis,'text-field':['get','point_count_abbreviated'],'text-font':[FONT],'text-size':13,'text-allow-overlap':true},paint:{'text-color':N?'#ffd9a8':'#8a3c00'}});
+ map.addLayer({id:'rsselc',type:'circle',source:'rs',filter:['==',['get','id'],''],layout:{visibility:vis},paint:{'circle-radius':30,'circle-translate':[0,-35],'circle-color':'#ffc400','circle-blur':.45,'circle-opacity':.9,'circle-pitch-alignment':'viewport'}});
+ map.addLayer({id:'rspins',type:'symbol',source:'rs',minzoom:10.5,filter:['!',['has','point_count']],layout:{visibility:vis,'icon-image':['concat','rs-',['to-string',['get','lv']],['case',['==',['get','e'],1],'e','']],'icon-anchor':'bottom','icon-allow-overlap':true,'symbol-sort-key':['-',0,['get','lv']],
+  'text-field':['step',['zoom'],'',14.5,['format',['get','name'],{},'\n',{},['get','lt'],{'text-color':['to-color',['get','lc'],'#8d959e'],'font-scale':.92}]],'text-font':[FONT],'text-size':12,'text-offset':[0,.25],'text-anchor':'top','text-optional':true,'text-max-width':9},
+  paint:{'text-color':N?'#f1f2f4':'#1f2328','text-halo-color':N?'#14161a':'#ffffff','text-halo-width':1.6,'icon-opacity':['case',['==',['get','f'],0],.25,['==',['get','c'],1],.5,1],'text-opacity':['case',['==',['get','f'],0],.3,1]}});
+ if(rsSel)rsSetSel(rsSel)}
+let rsBound=false;
+function rsBind(){if(rsBound)return;rsBound=true;
+ map.on('click','rspins',e=>rsOpenR(rsById[e.features[0].properties.id],false));
+ map.on('click','rscl',async e=>{const f=e.features[0];try{const z=await map.getSource('rs').getClusterExpansionZoom(f.properties.cluster_id);map.easeTo({center:f.geometry.coordinates,zoom:z+.4})}catch(_){map.easeTo({center:f.geometry.coordinates,zoom:map.getZoom()+2})}});
+ map.on('click','rsix',e=>{const f=e.features[0];map.flyTo({center:f.geometry.coordinates,zoom:f.properties.cluster?Math.min(map.getZoom()+2.2,11):12})});
+ for(const l of ['rspins','rscl','rsix']){map.on('mouseenter',l,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',l,()=>map.getCanvas().style.cursor='')}
+ map.on('moveend',()=>{if(TAB==='rs')rsLoad()})}
+function rsBuild(){if(map&&map.getSource('rs'))map.getSource('rs').setData(rsFC())}
+const FFL=['cl','cln','selc','pins'],RSL=['rsix','rsixn','rscl','rscln','rsselc','rspins'];
+function rsShow(){rsLegend();if(!map)return;for(const l of FFL)if(map.getLayer(l))map.setLayoutProperty(l,'visibility',TAB==='ff'?'visible':'none');for(const l of RSL)if(map.getLayer(l))map.setLayoutProperty(l,'visibility',TAB==='rs'?'visible':'none');}
+function rsLegend(){const el=document.querySelector('.legend');if(!el||!RS_ON)return;el.innerHTML=TAB==='rs'?`<span><i class="lp" style="--c:#1e9e5a"></i>Table dispo</span><span><i class="lp" style="--c:#e07b0a"></i>Un peu d'attente</span><span><i class="lp" style="--c:#d93025"></i>Plein, réserve</span><span><i class="lp" style="--c:#9aa1a9"></i>Fermé</span><span class="mut">Pâle = estimé</span>`
+  :`<span><i class="lp" style="--c:#1e9e5a"></i>Calme</span><span><i class="lp" style="--c:#e07b0a"></i>Du monde</span><span><i class="lp" style="--c:#d93025"></i>Blindé</span><span><i class="lp" style="--c:#9aa1a9"></i>Fermé ou pas d'info</span><span class="mut">Pâle = estimé</span>`}
+if(RS_ON&&TAB==='rs')rsLegend();
+async function rsInit(){if(!RS_ON||!map)return;try{await rsPins()}catch(e){}if(!RSI){try{const x=await fetch('data/rs/index.json');RSI=x.ok?await x.json():{t:{},n:0}}catch(e){RSI={t:{},n:0}}}
+ rsLayers();rsBind();rsShow();if(TAB==='rs'){rsLoad();if(!rsSel)rsHome()}rsConnect()}
+function setTab(t){if(!RS_ON||t===TAB)return;TAB=t;store.set('narabu-tab',t);if(t==='ff'){rsSetSel(null);PAUSE=null}else{setSel(null)}
+ document.body.classList.remove('det');setHash('');filters();rsShow();if(t==='rs'){rsLoad();rsHome()}else renderHome();
+ if(map&&t==='rs'&&map.getZoom()<10.5)toast('Zoome sur une ville ou cherche-la pour voir ses restaurants')}
+
+/* infos des gens (Firestore, collection rreports) */
+function rsClean(x){return x&&typeof x.r==='string'&&['svc','tab'].includes(x.k)&&typeof x.ts==='number'&&x.ts<=Date.now()+60e3?{r:x.r,t:x.t,k:x.k,s:x.s||'',m:+x.m||0,via:x.via||'place',sv:x.sv||'',ts:x.ts,u:x.u}:null}
+function rsConnect(){if(rsConnect.done)return;if(mode==='wait'){setTimeout(rsConnect,1500);return}rsConnect.done=true;
+ if(db&&mode!=='local'){try{db.collection('rreports').where('ts','>=',Date.now()-26*3600e3).onSnapshot(s=>{rsRep=s.docs.map(d=>rsClean(d.data())).filter(Boolean);rsRefresh()},()=>rsGoLocal())}catch(e){rsGoLocal()}}
+ else rsGoLocal();for(const k of rsTiles.keys())rsAskSvc(k)}
+function rsGoLocal(){rsLocal=true;try{rsRep=JSON.parse(store.get('narabu-rr')||'[]').map(rsClean).filter(Boolean)}catch(e){rsRep=[]}
+ for(const x of rsRep)if(x.k==='svc'){const a=rsSvc.get(x.r)||[];a.push(x.m);rsSvc.set(x.r,a)}rsRefresh()}
+function rsAskSvc(k){if(!rsConnect.done||rsLocal||!db||rsSvcAsked.has(k))return;rsSvcAsked.add(k);
+ try{db.collection('rreports').where('t','==',k).get().then(s=>{const lim=Date.now()-60*86400e3;for(const d of s.docs){const x=rsClean(d.data());if(x&&x.k==='svc'&&x.ts>lim){const a=rsSvc.get(x.r)||[];a.push(x.m);rsSvc.set(x.r,a)}}rsRefresh()}).catch(()=>{})}catch(e){}}
+function rsRefresh(){if(TAB!=='rs')return;rsBuild();if(view==='rsdetail')rsDetail();else if(view==='home')rsHome()}
+let rsBusySend=false;
+async function rsSend(k,s,m,via,sv){const r=rsSel;if(!r||rsBusySend)return;
+ const last=JSON.parse(store.get('narabu-rlast')||'{}'),key=r.id+k;if(last[key]&&Date.now()-last[key]<10*60e3)return toast('Tu as déjà donné cette info il y a moins de 10 min.');
+ rsBusySend=true;const doc={v:1,r:r.id,t:r.tile,k,s:s||'',m:Math.round(m||0),via:via||'place',sv:sv||'',ts:Date.now(),u:uid||'moi'};
+ try{if(db&&!rsLocal)await db.collection('rreports').add(doc);else{rsRep.push(doc);store.set('narabu-rr',JSON.stringify(rsRep.filter(x=>Date.now()-x.ts<60*86400e3)))}
+  if(k==='svc'){const a=rsSvc.get(r.id)||[];a.push(doc.m);rsSvc.set(r.id,a)}else if(rsLocal===false&&!rsRep.includes(doc))rsRep.push(doc);
+  last[key]=Date.now();store.set('narabu-rlast',JSON.stringify(last));addPts(k==='svc'?5:10);toast(k==='svc'?'Merci ! +5 points. Ça aide les gens pressés.':'Merci ! +10 points. Ton info est visible par tout le monde.')}
+ catch(e){toast('Envoi impossible pour le moment. Réessaie dans un instant.')}
+ rsBusySend=false;rsBuild();rsDetail()}
+
+/* panneau */
+function rsBadge(st){return `<span class="pin s${st.est?' est':''}${st.closed||st.off?' off':''}" style="background:${BG.rs};color:${FG.rs};box-shadow:0 0 0 3px ${RLV[st.lv].c}">${ICO.rs}</span>`}
+const rsStTxt=st=>st.closed?'Fermé':st.off?'Hors des heures de repas':st.full?`<b style="color:#d93025">Complet</b> · ${ago(st.live.ts)}`:st.req?'<b style="color:#d93025">Sur réservation</b>':st.live?`<b style="color:${RLV[st.lv].c}">${st.live.s==='direct'?'Table tout de suite':'Attente '+st.wait+' min'}</b> · ${ago(st.live.ts)}`:`<b style="color:${RLV[st.lv].c}">${RLV[st.lv].n}</b> · estimé`;
+function rsRow(r,o,plan){const st=r.st,d=o?distM(o.lat,o.lon,r.lat,r.lon):null;
+ return `<button class="row" data-rsr="${r.id}">${rsBadge(st)}<span class="t"><b>${esc(r.name)}</b><small>${esc(r.lab||RT[r.ty])} · ${rsStTxt(st)}</small>${plan?`<small class="plan">${plan.walk} min à pied · ${plan.wait?plan.wait+' min d\'attente · ':''}servi en ${plan.svc} min · ${plan.eat} min pour manger · ${plan.walk} min retour</small>`:''}</span>`
+  +(plan?`<span class="dist"><b>${plan.tot} min</b><small>il reste ${PAUSE-plan.tot} min</small></span>`:d!=null?`<span class="dist"><b>${dTxt(d)}</b>${walkTxt(d)?'<small>'+walkTxt(d)+'</small>':''}</span>`:'')+'</button>'}
+const PAUSES=[[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30']];
+function pauseBox(){return `<div class="pause"><div class="hrow"><b>⏱ Ma pause déj</b>${PAUSE?'<button class="lnk" data-pz="0">Arrêter</button>':''}</div><p class="mut" style="margin:2px 0 8px;font-size:13px">Combien de temps tu as ? Narabu compte la marche aller-retour, l'attente, le service et le repas.</p><div class="chips" style="margin:0">${PAUSES.map(([m,t])=>`<button class="chip" data-pz="${m}" aria-pressed="${PAUSE===m}">${t}</button>`).join('')}</div></div>`}
+function rsHome(){if(TAB!=='rs')return;view='home';const z=map?map.getZoom():0;let h='';const o=rsFrom();
+ if(z<10.5||!RSI){h+=`<div class="hrow"><h2>Restaurants</h2>${thBtn()}</div><p class="mut" style="margin:0">Sans réserver, c'est jouable ? Ta pause déj tient ? ${RSI&&RSI.n?`${RSI.n.toLocaleString('fr-FR')} restaurants en France.`:''} Choisis une ville ou zoome.</p>${pauseBox()}<h3>Villes</h3><div class="cities">${QUICK.filter(n=>bestTown(n)).map(n=>`<button data-c="${n}">${n}</button>`).join('')}</div>`}
+ else{const b=map.getBounds(),now=Date.now();let list=rsCur.filter(r=>{r.st=r.st||rsState(r,now);return rsVis(r)&&b.contains([r.lon,r.lat])});
+  if(PAUSE){const pl=list.map(r=>[r,rsPlan(r,r.st,o)]).filter(x=>x[1]&&x[1].tot<=PAUSE).sort((a,b)=>a[1].tot-b[1].tot);
+   h+=`<div class="hrow"><h2>${pl.length} resto${pl.length>1?'s':''} pour ta pause</h2>${thBtn()}</div>${pauseBox()}<p class="mut" style="font-size:13px;margin:8px 0">${o.me?'Depuis ta position.':'Depuis le centre de la carte. Appuie sur « Près de moi » pour partir de ta position.'} Temps estimés, corrigés par les infos des gens.</p>`
+    +(pl.length?pl.slice(0,40).map(([r,p])=>rsRow(r,null,p)).join(''):`<p class="note">Aucun resto ouvert ne tient dans ${PAUSES.find(p=>p[0]===PAUSE)[1]} par ici. Essaie une pause plus longue ou déplace la carte.</p>`)}
+  else{const rank=r=>r.st.closed||r.st.off?9:r.st.full||r.st.req?5:r.st.lv,ctr=map.getCenter(),dd=r=>ctr.distanceTo(new maplibregl.LngLat(r.lon,r.lat));list.sort((a,b)=>rank(a)-rank(b)||(b.opt&4)-(a.opt&4)||dd(a)-dd(b));
+   h+=`<div class="hrow"><h2>${list.length} restaurant${list.length>1?'s':''} ici</h2>${thBtn()}</div>${pauseBox()}<h3>Sans réserver, maintenant</h3>`
+    +(list.length?list.slice(0,60).map(r=>rsRow(r,ME?o:null)).join(''):'<p class="note">Aucun restaurant dans cette zone avec tes filtres.</p>')+(list.length>60?'<p class="mut">Zoome pour voir les autres.</p>':'')}}
+ const now=Date.now(),hot=[...new Set(rsRep.filter(x=>x.k==='tab'&&now-x.ts<2*3600e3&&rsById[x.r]).sort((a,b)=>b.ts-a.ts).map(x=>x.r))].slice(0,6);
+ if(hot.length){h+='<h3>En direct, par les gens</h3>'+hot.map(id=>{const r=rsById[id];r.st=rsState(r);return rsRow(r)}).join('')}
+ h+=ptsBox()+`<p class="mut" style="font-size:12px;margin-top:16px">Liste des restaurants : © les contributeurs d'<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL)${RSI&&RSI.v?', mise à jour le '+RSI.v.split('-').reverse().join('/'):''}.</p>`+conn();
+ $('pin').innerHTML=h;hint()}
+function rsDay(r){const n=new Date(),bars=[];for(let hh=11;hh<=23;hh++){const d=new Date(n.getFullYear(),n.getMonth(),n.getDate(),hh,0);const oh=openNow(r,d),open=oh?oh.o:rsMeal(d),v=open?rsDemand(r,d):0;bars.push([hh,v,open])}
+ return `<div class="wave day">${bars.map(([hh,v,o])=>`<div style="height:${o?Math.max(8,Math.min(100,v*90)):3}%;background:${o?RLV[v<.5?1:v<.75?2:3].c:'var(--line)'};opacity:${o?.85:1}" class="${hh===n.getHours()?'now':''}" title="${hh}h"></div>`).join('')}</div><div class="axis"><span>11h</span><span>14h</span><span>17h</span><span>20h</span><span>23h</span></div>`}
+let rsCallOpen=false;
+function rsDetail(){const r=rsSel;if(!r)return;view='rsdetail';const st=r.st=rsState(r),o=rsFrom(),d=ME?distM(ME.lat,ME.lon,r.lat,r.lon):null,sv=svcOf(r),c=RLV[st.lv].c;
+ const big=st.closed?['Fermé',st.oh?st.oh.t:'']:st.off?['Hors des heures de repas','Horaires pas indiqués pour ce resto']:st.full?['Complet',st.live.via==='appel'?`Complet ce ${st.live.sv||rsService(new Date())}, d'après quelqu'un qui a appelé`:'D\'après quelqu\'un sur place']:st.req?['Sur réservation','Il faut réserver pour manger ici']:st.live?(st.live.s==='direct'?['Table tout de suite','Pas d\'attente']:[`Attente : ${st.wait} min`,'Il y a une table au bout']):[RLV[st.lv].n,RLV[st.lv].s];
+ const tel=r.tel?r.tel.split(';')[0].trim():'',web=r.web;
+ let h=`<button class="back" id="backBtn">← Retour</button><div class="brand" style="color:${FG.rs}">${esc(r.lab||RT[r.ty])}${r.opt&4?' · resto connu':''}${r.opt&1?' · terrasse':''}</div><h2>${esc(r.name)}</h2>
+ <p class="mut" style="margin:0">${esc([r.addr,[r.cp,r.city].filter(Boolean).join(' ')].filter(Boolean).join(' - '))}${d!=null?` · à ${dTxt(d)}${walkTxt(d)?' ('+walkTxt(d)+')':''}`:''}</p>
+ ${st.oh?`<p style="margin:4px 0 0;font-weight:700;color:${st.oh.o?'var(--ok)':'var(--mut)'}">${esc(st.oh.t)}</p>`:'<p class="mut" style="margin:4px 0 0">Horaires pas indiqués</p>'}
+ <div class="st${st.est||st.closed||st.off?' est':''}" style="--c:${c};background:${c}"><small style="font-weight:700">Sans réserver</small><strong>${big[0]}</strong><small>${esc(big[1]||'')}</small></div>
+ <p class="srcl">${st.closed||st.off?'':esc(rsWhy(r,st))}</p>
+ <div class="go">${tel?`<a href="tel:${esc(tel.replace(/[^\d+]/g,''))}">Appeler</a>`:''}${web?`<a href="${esc(web)}" target="_blank" rel="noopener">Réserver / site</a>`:''}<a href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank" rel="noopener">Y aller</a></div>
+ <h3>⏱ Chrono du service</h3><p style="margin:0"><b style="font-size:18px">Servi en ${sv.n>=2?'':'environ '}${sv.m} min</b> <span class="mut">${sv.n>=2?`d'après ${sv.n} personnes`:'(estimation pour ce type de resto)'}</span></p>
+ ${sv.m<=12&&sv.n>=2?'<span class="tagl w">Rapide le midi</span>':''}
+ ${PAUSE?(()=>{const p=rsPlan(r,st,o);return p?`<p class="note">Pour ta pause de ${PAUSES.find(x=>x[0]===PAUSE)[1]} : ${p.walk} min à pied, ${p.wait?p.wait+' min d\'attente, ':''}servi en ${p.svc} min, ${p.eat} min pour manger, ${p.walk} min retour = <b>${p.tot} min</b>. ${p.tot<=PAUSE?'Ça passe ✓':'Trop juste ✗'}</p>`:''})():''}
+ <h3>Tu y es ? Dis-le en 1 clic</h3><div class="lvl">
+  <button class="lv" data-rt="direct" style="color:#1e9e5a"><span class="dot" style="background:#1e9e5a"></span><span><b>Table tout de suite</b><small>Pas d'attente</small></span></button>
+  <button class="lv" data-rt="attente" style="color:#e07b0a"><span class="dot" style="background:#e07b0a"></span><span><b>On m'a fait attendre</b><small>Choisis combien de temps juste après</small></span></button>
+  <button class="lv" data-rt="complet" style="color:#d93025"><span class="dot" style="background:#d93025"></span><span><b>Complet</b><small>Plus de place, on m'a refusé</small></span></button></div>
+ ${rsCallOpen==='attente'?`<div class="chips" style="margin-top:8px">${[5,10,15,20,30,45].map(m=>`<button class="chip" data-rw="${m}">${m} min${m===45?' et +':''}</button>`).join('')}</div>`:''}
+ <p style="margin:12px 0 6px;font-weight:700">Tu as appelé le resto ?</p><div class="chips" style="margin:0"><button class="chip" data-rc="soir">Complet ce soir</button><button class="chip" data-rc="midi">Complet ce midi</button><button class="chip" data-rc="ok">Il reste de la place</button></div>
+ <h3>Tu as mangé ici ?</h3><p class="mut" style="margin:0 0 6px;font-size:14px">Temps entre ta commande et ton plat :</p><div class="chips">${[5,10,15,20,30,45,60].map(m=>`<button class="chip" data-rv="${m}">${m} min${m===60?' et +':''}</button>`).join('')}</div>
+ <h3>Aujourd'hui, heure par heure (estimation)</h3>${rsDay(r)}
+ <p class="mut" style="font-size:12px;margin-top:14px">Fiche tirée d'OpenStreetMap. Une erreur (nom, horaires, fermé) ? <a href="https://www.openstreetmap.org/${{n:'node',w:'way',r:'relation'}[r.osm[0]]}/${r.osm.slice(1)}" target="_blank" rel="noopener">Corrige-la sur OpenStreetMap</a>, Narabu se met à jour chaque semaine.</p>`;
+ $('pin').innerHTML=h;hint()}
+function rsSetSel(r){rsSel=r;if(!map||!map.getLayer('rsselc'))return;const id=r?r.id:'';map.setFilter('rsselc',['==',['get','id'],id]);map.setLayoutProperty('rspins','icon-size',['case',['==',['get','id'],id],1.22,1]);if(r&&!rsGlowOn){rsGlowOn=true;requestAnimationFrame(rsGlow)}}
+let rsGlowOn=false;
+function rsGlow(t){if(!rsSel||!map||!map.getLayer('rsselc')){rsGlowOn=false;return}const k=calme?.5:(Math.sin(t/260)+1)/2;try{map.setPaintProperty('rsselc','circle-radius',26+k*16);map.setPaintProperty('rsselc','circle-opacity',1-k*.6)}catch(e){}if(calme){rsGlowOn=false;return}requestAnimationFrame(rsGlow)}
+function rsOpenR(r,fly){if(!r)return;if(rsSel!==r)rsCallOpen=false;rsSetSel(r);setHash('#rs-'+r.id.slice(2)+'-'+r.tile);document.body.classList.add('det');rsDetail();$('panel').scrollTop=0;setPanel('big');
+ const mob=innerWidth<=820;if(fly||mob)map.flyTo({center:[r.lon,r.lat],zoom:fly?Math.max(map.getZoom(),15.5):map.getZoom(),offset:[0,mob?-map.getContainer().clientHeight*.3:0],duration:700})}
+function rsBack(){rsSetSel(null);setHash('');setPanel('mid');document.body.classList.remove('det');rsHome()}
+function rsClick(t){const a=t.closest('[data-rsr]');if(a){rsOpenR(rsById[a.dataset.rsr],true);return true}
+ if(t.closest('#backBtn')&&view==='rsdetail'){rsBack();return true}
+ const pz=t.closest('[data-pz]');if(pz){const m=+pz.dataset.pz;PAUSE=m&&PAUSE!==m?m:null;if(PAUSE&&!ME&&CFG.position&&!ART&&navigator.geolocation)locate();rsBuild();filters();view==='rsdetail'?rsDetail():rsHome();return true}
+ const rt=t.closest('[data-rt]');if(rt){const s=rt.dataset.rt;if(s==='attente'){rsCallOpen=rsCallOpen==='attente'?false:'attente';rsDetail()}else rsSend('tab',s,0,'place');return true}
+ const rw=t.closest('[data-rw]');if(rw){rsCallOpen=false;rsSend('tab','attente',+rw.dataset.rw,'place');return true}
+ const rc=t.closest('[data-rc]');if(rc){const v=rc.dataset.rc;v==='ok'?rsSend('tab','direct',0,'appel'):rsSend('tab','complet',0,'appel',v);return true}
+ const rv=t.closest('[data-rv]');if(rv){rsSend('svc','',+rv.dataset.rv,'place');return true}
+ return false}
+function rsTabs(){return RS_ON?`<span class="tabs" role="tablist"><button role="tab" data-tab="ff" aria-selected="${TAB==='ff'}">Fast-food</button><button role="tab" data-tab="rs" aria-selected="${TAB==='rs'}">Restaurants</button></span>`:''}
+function rsFilters(){const me=CFG.position&&!ART&&navigator.geolocation?`<button class="f me-f" data-f="me" aria-pressed="${!!ME}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>Près de moi</button>`:'';
+ return rsTabs()+me+`<button class="f" data-f="rs-pause" aria-pressed="${!!PAUSE}">⏱ Ma pause déj</button><button class="f" data-f="rs-ok" aria-pressed="${RF.ok}">Table dispo</button><button class="f" data-f="rs-all" aria-pressed="${!RF.ty}">Tout</button>`
+  +RTF.map(k=>`<button class="f" data-f="rs-t-${k}" aria-pressed="${RF.ty===k}">${RT[k]}</button>`).join('')+`<button class="f" data-f="rs-open" aria-pressed="${RF.open}">Ouvert maintenant</button>`}
+function rsFilterClick(k){if(k==='me'){locate();return}
+ if(k==='rs-pause'){PAUSE=PAUSE?null:45;if(PAUSE&&!ME&&CFG.position&&!ART&&navigator.geolocation)locate();if(PAUSE&&map&&map.getZoom()<13.5&&ME)map.flyTo({center:[ME.lon,ME.lat],zoom:15})}
+ else if(k==='rs-ok')RF.ok=!RF.ok;else if(k==='rs-open')RF.open=!RF.open;else if(k==='rs-all')RF.ty=null;else if(k.startsWith('rs-t-')){const t=k.slice(5);RF.ty=RF.ty===t?null:t}
+ filters();rsBuild();if(view!=='rsdetail')rsHome()}
+function rsSearch(q){const box=$('res');let i=0,h='';hits=[];
+ if(!q){hits=RTF.map(k=>({t:'rst',v:k}));box.innerHTML='<div class="h">Quel type de resto ?</div>'+hits.map(x=>`<button data-i="${i++}"><span class="mini" style="background:#b5651d">${esc(RT[x.v][0])}</span><span><b>${esc(RT[x.v])}</b></span></button>`).join('');box.style.display='block';return}
+ const toks=q.split(' '),towns=townsOf(q).slice(0,4),rs=rsCur.filter(r=>toks.every(w=>r.key.includes(' '+w))).slice(0,20);
+ if(towns.length)h+='<div class="h">Aller à</div>'+towns.map(t=>{hits.push({t:'town',v:t});return `<button data-i="${i++}"><span class="mini" style="background:#5f6670">${esc(t.d)}</span><span><b>${esc(t.n)}</b><br><small class="mut">${esc(DEP[t.d]?.n||t.d)}</small></span></button>`}).join('');
+ if(rs.length)h+='<div class="h">Restaurants sur la carte</div>'+rs.map(r=>{hits.push({t:'rsr',v:r});r.st=r.st||rsState(r);return `<button data-i="${i++}">${rsBadge(r.st)}<span><b>${esc(r.name)}</b><br><small class="mut">${esc(r.lab||RT[r.ty])}${r.city?' · '+esc(r.city):''}</small></span></button>`}).join('');
+ box.innerHTML=h||'<div class="h" style="padding:14px">Rien trouvé. Tape une ville, puis cherche le resto une fois sur place.</div>';box.style.display='block'}
+async function rsRoute(){const m=location.hash.match(/^#rs-(\w+)-(s?-?\d+_-?\d+)$/);if(!m||!RS_ON)return false;if(TAB!=='rs')setTab('rs');const l=await rsGet(m[2]),r=l.find(x=>x.osm===m[1]);if(r){rsCur=[...new Set([...rsCur,...l])];rsBuild();rsOpenR(r,true)}return true}
 /* aide */
 const modal=v=>{$('modal').style.display=v?'flex':'none';if(v)$('okBtn').focus()};
 $('helpBtn').addEventListener('click',()=>modal(true));
@@ -679,7 +938,7 @@ Promise.all([load('restos.json'),load('deps.json'),load('feat.json'),load('calen
  map.touchZoomRotate.disableRotation();
  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
  map.on('moveend',()=>{hint();if(view==='home')renderHome()});
- let ready=false;const init=async()=>{if(ready)return;ready=true;try{await addPins()}catch(e){console.warn('pins',e)}addRestos();setSel(sel);if(CH&&!byId[CH.r])CH=null;banner();rebuild();refresh();route();connect().then(hashUid);meteo();if(innerWidth<=820){const at=document.querySelector('.maplibregl-ctrl-attrib');if(at){at.classList.remove('maplibregl-compact-show');at.removeAttribute('open')}}if(CFG.position&&!ART&&navigator.geolocation)$('locBtn').hidden=false};
+ let ready=false;const init=async()=>{if(ready)return;ready=true;try{await addPins()}catch(e){console.warn('pins',e)}addRestos();setSel(sel);if(CH&&!byId[CH.r])CH=null;banner();rebuild();refresh();if(RS_ON)rsInit().then(()=>rsRoute().then(ok=>{if(!ok)route()}));else route();connect().then(()=>{hashUid();actLoad(true)});geoAuto();meteo();if(innerWidth<=820){const at=document.querySelector('.maplibregl-ctrl-attrib');if(at){at.classList.remove('maplibregl-compact-show');at.removeAttribute('open')}}if(CFG.position&&!ART&&navigator.geolocation)$('locBtn').hidden=false};
  map.on('load',init);map.once('idle',init);setTimeout(()=>{if(!ready&&map.isStyleLoaded())init()},4000);
 }).catch(()=>toast('Impossible de charger les données.'));
 renderHome();
