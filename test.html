@@ -99,6 +99,19 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 .go a{flex:1;text-align:center;border-radius:10px;padding:11px 6px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--ink)}
 .go a:first-child{background:var(--red);border-color:var(--red);color:var(--on-red)}
 .note{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+.geoc{background:linear-gradient(135deg,#fff1e6,#ffe1cc);border:1px solid #ffc9a3;border-radius:14px;padding:12px 14px;margin:12px 0 4px;color:#3a1d07}
+[data-theme=dark] .geoc{background:linear-gradient(135deg,#3a2414,#2a1a10);border-color:#6b3a17;color:#ffe6d1}
+.geoc .nt{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:15px}
+.geoc .nx{width:30px;height:30px;border-radius:50%;background:#0000000f;font-size:18px;flex:none;margin:-4px -4px 0 0;color:inherit}
+.geoc p{margin:6px 0 10px;font-size:14px;line-height:1.4}
+.geob{width:100%;min-height:44px;border-radius:12px;background:var(--red);color:var(--on-red);font-weight:800;font-size:15px}
+.act{display:flex;gap:10px;align-items:flex-start;background:#e8f7ee;color:#0f5132;border-radius:12px;padding:9px 12px;font-size:14px;line-height:1.4;margin:6px 0 8px}
+[data-theme=dark] .act{background:#12301f;color:#b9f0cf}
+.act.act0{background:var(--soft);color:inherit}
+.act .pulse{flex:none;width:10px;height:10px;border-radius:50%;background:#1e9e5a;margin-top:5px;box-shadow:0 0 0 0 #1e9e5a88;animation:pls 1.8s infinite}
+.act0 .pulse{background:#ef8a17;box-shadow:0 0 0 0 #ef8a1788}
+@keyframes pls{70%{box-shadow:0 0 0 8px #0000}100%{box-shadow:0 0 0 0 #0000}}
+@media (prefers-reduced-motion:reduce){.act .pulse{animation:none}}
 .conn{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);margin-top:22px}
 #modal{position:fixed;inset:0;background:#0007;z-index:3000;display:none;align-items:center;justify-content:center;padding:16px}
 #modal .box{background:var(--bg);border-radius:16px;max-width:420px;width:100%;padding:22px}
@@ -433,13 +446,29 @@ function nearBox(){if(!ME)return'';const l=R.filter(visible).map(r=>[r,dOf(r)]).
  const what=F.sel?selName():'Fast-foods';
  return `<h3 style="margin-top:14px">${esc(what)} près de toi</h3>`+(l.length?l.map(([r,d])=>`<button class="row" data-r="${r.id}">${stBadge(r)}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small>${stTxt(r.st)}</small></span><span class="dist"><b>${dTxt(d)}</b>${walkTxt(d)?'<small>'+walkTxt(d)+'</small>':''}</span></button>`).join(''):'<p class="note">Aucun resto à moins de 15 km avec tes filtres.</p>')}
 function rowLive(r){const c=crowd(r.id);if(!c)return'';const lv=lvOf(c.b);return `<button class="row" data-r="${r.id}">${badge(r.b,lv,'s')}<span class="t"><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><small><span style="color:${LV[lv].c};font-weight:800">${LV[lv].n}</span> · ${ago(c.last)} · ${esc(r.city)}</small></span></button>`}
+/* activité : montrer que d'autres se servent de Narabu (infos du jour, visites du jour, gens en ce moment) */
+const ACT={j:null,vis:null,t:0};
+function parisMidnight(){const n=new Date(),o={};for(const x of new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(n))o[x.type]=+x.value;return n.getTime()-((o.hour*60+o.minute)*60+o.second)*1e3-n.getMilliseconds()}
+async function actLoad(force){if(!CFG.firebase||ART||(!force&&Date.now()-ACT.t<4*60e3))return;ACT.t=Date.now();const f=CFG.firebase,B=`https://firestore.googleapis.com/v1/projects/${f.projectId}/databases/(default)/documents`,jour=new Intl.DateTimeFormat('fr-CA',{timeZone:'Europe/Paris'}).format(new Date());
+ try{const [a,b]=await Promise.all([fetch(`${B}:runAggregationQuery?key=${f.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({structuredAggregationQuery:{structuredQuery:{from:[{collectionId:'reports'}],where:{fieldFilter:{field:{fieldPath:'ts'},op:'GREATER_THAN_OR_EQUAL',value:{integerValue:String(parisMidnight())}}}},aggregations:[{alias:'n',count:{}}]}})}).then(r=>r.ok?r.json():null).catch(()=>null),
+   fetch(`${B}/stats/${jour}?key=${f.apiKey}`).then(r=>r.ok?r.json():null).catch(()=>null)]);
+  const n=a&&a[0]&&a[0].result&&a[0].result.aggregateFields&&a[0].result.aggregateFields.n;if(n)ACT.j=+n.integerValue||0;
+  if(b&&b.fields)ACT.vis=+((b.fields.c||{}).integerValue||0);if(view==='home'&&TAB!=='rs')renderHome()}catch(e){}}
+setInterval(()=>{if(!document.hidden)actLoad()},5*60e3);
+function actBox(){const now=Date.now(),me=uid||'moi',rec=reports.filter(x=>now-x.ts<WIN&&byId[x.r]),ppl=new Set(rec.map(x=>x.u||x.r+x.ts)).size,rs=new Set(rec.map(x=>x.r)).size,
+  j=Math.max(ACT.j||0,reports.filter(x=>x.ts>=parisMidnight()).length),s=n=>n>1?'s':'',bits=[];
+ if(rec.length)bits.push(`<b>${ppl} personne${s(ppl)}</b> ${ppl>1?'ont':'a'} donné une info sur <b>${rs} resto${s(rs)}</b> ces 90 dernières minutes`);
+ if(j)bits.push(`<b>${j} info${s(j)}</b> envoyée${s(j)} aujourd'hui`);
+ if(ACT.vis>=20)bits.push(`<b>${ACT.vis} personnes</b> ont regardé la carte aujourd'hui`);
+ if(!bits.length)return `<div class="act act0"><i class="pulse"></i><span>Personne n'a encore donné d'info aujourd'hui. Sois le premier : 1 clic sur un fast-food où tu es.</span></div>`;
+ return `<div class="act"><i class="pulse"></i><span>${bits.join(' · ')}</span></div>`}
 function renderHome(){if(TAB==='rs')return rsHome();view='home';const z=map?map.getZoom():0;let h='';
  if(z>=10.5){const b=map.getBounds(),ctr=map.getCenter(),dist=r=>ctr.distanceTo(new maplibregl.LngLat(r.lon,r.lat)),conf=r=>r.st.cur&&!r.st.est?1:0;const list=R.filter(r=>visible(r)&&b.contains([r.lon,r.lat]));
   list.sort((a,b)=>(conf(b)-conf(a))||dist(a)-dist(b));
-  h+=`<div class="hrow"><h2>${list.length} resto${list.length>1?'s':''} ici</h2>${thBtn()}</div>${srcBox()}${nearBox()}${ME?'<h3>Sur la carte</h3>':''}`+(list.length?list.slice(0,60).map(r=>rowR(r)).join(''):'<p class="note">Aucun resto dans cette zone avec tes filtres.</p>')+(list.length>60?'<p class="mut">Zoome pour voir les autres.</p>':'')}
- else{h+=`<div class="hrow"><h2>Il y a du monde ?</h2>${thBtn()}</div><p class="mut" style="margin:0">Choisis une ville ou zoome sur la carte.</p>${srcBox()}${nearBox()}<h3>Villes</h3><div class="cities">${QUICK.filter(n=>bestTown(n)).map(n=>`<button data-c="${n}">${n}</button>`).join('')}</div>`}
+  h+=`<div class="hrow"><h2>${list.length} resto${list.length>1?'s':''} ici</h2>${thBtn()}</div>${geoCard()}${srcBox()}${nearBox()}${ME?'<h3>Sur la carte</h3>':''}`+(list.length?list.slice(0,60).map(r=>rowR(r)).join(''):'<p class="note">Aucun resto dans cette zone avec tes filtres.</p>')+(list.length>60?'<p class="mut">Zoome pour voir les autres.</p>':'')}
+ else{h+=`<div class="hrow"><h2>Il y a du monde ?</h2>${thBtn()}</div><p class="mut" style="margin:0">Choisis une ville ou zoome sur la carte.</p>${geoCard()}${srcBox()}${nearBox()}<h3>Villes</h3><div class="cities">${QUICK.filter(n=>bestTown(n)).map(n=>`<button data-c="${n}">${n}</button>`).join('')}</div>`}
  const now=Date.now(),hot=[...new Set(reports.filter(x=>now-x.ts<WIN&&byId[x.r]).sort((a,b)=>b.ts-a.ts).map(x=>x.r))].slice(0,8);
- h+=`<h3>En direct, par les gens</h3>`+(hot.length?hot.map(id=>rowLive(byId[id])).join(''):'<p class="note">Personne n\'a encore donné d\'info ces 90 dernières minutes. Tu es dans un fast-food ? Clique dessus et dis-le.</p>');
+ const ab=actBox();h+=`<h3>En direct, par les gens</h3>${ab}`+(hot.length?hot.map(id=>rowLive(byId[id])).join(''):ab.includes('act0')?'':'<p class="note">Rien ces 90 dernières minutes. Tu es dans un fast-food ? Clique dessus et dis-le.</p>');
  h+=ptsBox();
  if(deferred)h+=`<p style="margin:14px 0 0"><button class="chip" data-inst>Installer l'appli sur ce téléphone</button></p>`;
  h+=conn();$('pin').innerHTML=h;hint()}
@@ -534,6 +563,8 @@ $('panel').addEventListener('click',e=>{const t=e.target;
  const th=t.closest('[data-th]');if(th)return setTheme(th.dataset.th);
  if(t.closest('[data-share]')){e.preventDefault();return share(sel)}
  const pk=t.closest('[data-pk]');if(pk)return sendProb(+pk.dataset.pk);
+ if(t.closest('[data-geo]'))return geoOn();
+ if(t.closest('[data-gx]')){store.set('narabu-geo-x','1');return renderHome()}
  if(t.closest('[data-inst]')&&deferred){deferred.prompt();deferred=null;return renderHome()}
  const l=t.closest('[data-l]');if(l&&!l.disabled)send(+l.dataset.l)});
 /* ===== position, météo (uniquement sur le vrai site : la page claude.ai n'y a pas droit) ===== */
@@ -549,6 +580,17 @@ function locate(){if(!navigator.geolocation)return toast('Position non disponibl
    if(nr.length){const bb=new maplibregl.LngLatBounds([ME.lon,ME.lat],[ME.lon,ME.lat]);for(const [r] of nr)bb.extend([r.lon,r.lat]);map.fitBounds(bb,{padding:pad(),maxZoom:16})}else map.flyTo({center:[ME.lon,ME.lat],zoom:14});toast(nr.length?'Voilà les plus proches de toi':'Aucun resto proche avec tes filtres');
    if(watchId==null)watchId=navigator.geolocation.watchPosition(setMe,()=>{},{enableHighAccuracy:true,maximumAge:20e3})},
   e=>toast(e.code===1?'Position refusée : autorise-la dans ton navigateur.':'Position introuvable pour l\'instant.'),{enableHighAccuracy:true,timeout:10e3,maximumAge:30e3})}
+/* position : si elle est déjà autorisée, on la suit sans rien demander (la question « Tu es au … ? » arrive toute seule) */
+let GEO='?';
+function startWatch(){if(watchId==null&&navigator.geolocation)watchId=navigator.geolocation.watchPosition(setMe,e=>{if(e.code===1){GEO='denied';if(view==='home')renderHome()}},{enableHighAccuracy:true,maximumAge:20e3})}
+/* l'état de l'autorisation est lu tout de suite (sans rien demander) ; le suivi démarre une fois la carte prête */
+const geoState=(async()=>{if(!navigator.geolocation||!CFG.position||ART)return GEO='denied';
+ try{const p=await navigator.permissions.query({name:'geolocation'});GEO=p.state;p.onchange=()=>{GEO=p.state;if(GEO==='granted')startWatch();if(view==='home'&&TAB!=='rs')renderHome()}}catch(e){GEO='prompt'}return GEO})();
+async function geoAuto(){await geoState;if(GEO==='granted')startWatch();if(view==='home'&&TAB!=='rs')renderHome()}
+function geoOn(){navigator.geolocation.getCurrentPosition(p=>{GEO='granted';setMe(p);startWatch();toast('Position activée ✓');renderHome()},
+ e=>{if(e.code===1)GEO='denied';toast(e.code===1?'Position refusée : tu peux l\'autoriser plus tard dans ton navigateur.':'Position introuvable pour l\'instant.');renderHome()},{enableHighAccuracy:true,timeout:10e3,maximumAge:30e3})}
+const geoCard=()=>ME||GEO!=='prompt'||mode==='ro'||!CFG.position||ART||store.get('narabu-geo-x')?'':
+ `<div class="geoc"><div class="nt"><b>📍 Donne l'info en 1 clic</b><button class="nx" data-gx aria-label="Masquer">×</button></div><p>Active ta position : quand tu es dans un fast-food, Narabu te demande s'il y a du monde. Un clic et c'est partagé avec tout le monde.</p><button class="geob" data-geo>Activer ma position</button><p class="mut" style="font-size:12px;margin:6px 0 0">Ta position reste sur ton téléphone, elle n'est jamais envoyée.</p></div>`;
 function nearest(){if(!meFresh())return null;let best=null,bd=1e9;for(const r of R){if(Math.abs(r.lat-ME.lat)>.003||Math.abs(r.lon-ME.lon)>.005)continue;const d=distM(ME.lat,ME.lon,r.lat,r.lon);if(d<bd){bd=d;best=r}}
  return best&&bd<=Math.max(90,Math.min(ME.acc,150))?best:null}
 /* si tu es dans un resto, l'appli te pose la question : 1 clic et c'est envoyé */
@@ -898,7 +940,7 @@ Promise.all([load('restos.json'),load('deps.json'),load('feat.json'),load('calen
  map.touchZoomRotate.disableRotation();
  map.addControl(new maplibregl.NavigationControl({showCompass:false}),'bottom-right');
  map.on('moveend',()=>{hint();if(view==='home')renderHome()});
- let ready=false;const init=async()=>{if(ready)return;ready=true;try{await addPins()}catch(e){console.warn('pins',e)}addRestos();setSel(sel);if(CH&&!byId[CH.r])CH=null;banner();rebuild();refresh();if(RS_ON)rsInit().then(()=>rsRoute().then(ok=>{if(!ok)route()}));else route();connect().then(hashUid);meteo();if(innerWidth<=820){const at=document.querySelector('.maplibregl-ctrl-attrib');if(at){at.classList.remove('maplibregl-compact-show');at.removeAttribute('open')}}if(CFG.position&&!ART&&navigator.geolocation)$('locBtn').hidden=false};
+ let ready=false;const init=async()=>{if(ready)return;ready=true;try{await addPins()}catch(e){console.warn('pins',e)}addRestos();setSel(sel);if(CH&&!byId[CH.r])CH=null;banner();rebuild();refresh();if(RS_ON)rsInit().then(()=>rsRoute().then(ok=>{if(!ok)route()}));else route();connect().then(()=>{hashUid();actLoad(true)});geoAuto();meteo();if(innerWidth<=820){const at=document.querySelector('.maplibregl-ctrl-attrib');if(at){at.classList.remove('maplibregl-compact-show');at.removeAttribute('open')}}if(CFG.position&&!ART&&navigator.geolocation)$('locBtn').hidden=false};
  map.on('load',init);map.once('idle',init);setTimeout(()=>{if(!ready&&map.isStyleLoaded())init()},4000);
 }).catch(()=>toast('Impossible de charger les données.'));
 renderHome();
