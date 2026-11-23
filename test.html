@@ -170,6 +170,137 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 .pause{background:light-dark(#fff4e0,#2b2215);border:1px solid light-dark(#f3d4a5,#4a3a22);border-radius:12px;padding:10px 12px;margin:10px 0 4px}
 .row small.plan{font-size:12px;color:var(--mut);margin-top:2px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== Mon Narabu ===== */
+:root[data-acc=acc1]{--red:light-dark(#7c3aed,#c4b5fd);--on-red:light-dark(#fff,#1a0b3d)}
+:root[data-acc=acc2]{--red:light-dark(#0369a1,#7dd3fc);--on-red:light-dark(#fff,#062033)}
+:root[data-acc=acc3]{--red:light-dark(#db2777,#f9a8d4);--on-red:light-dark(#fff,#3a0a20)}
+:root[data-acc=acc4]{--red:light-dark(#b45309,#fcd34d);--on-red:light-dark(#fff,#2a1a00)}
+/* le point sur la carte et ses habits */
+.me[data-sk=dot1]{background:radial-gradient(circle at 50% 70%,#fff3b0,#ffb300 35%,#ff3d00 75%);border-color:#ffe0b2;box-shadow:0 0 0 5px #ff6d0040,0 0 18px 6px #ff3d0088;animation:flk .18s infinite alternate}
+.me[data-sk=dot2]{width:30px;height:30px;background:none;border:0;box-shadow:none;font-size:26px;line-height:30px;text-align:center;animation:flo 2.4s ease-in-out infinite;opacity:.92}
+.me[data-sk=dot2]::after{content:'👻'}
+.me[data-sk=dot3]{background:#00e5ff;border-color:#e0fbff;box-shadow:0 0 6px 2px #00e5ff,0 0 0 0 #00e5ffaa;animation:neo 1.6s infinite}
+.me[data-sk=dot4],.me[data-sk=dot6]{width:34px;height:34px;background:none;border:0;box-shadow:none;font-size:28px;line-height:34px;text-align:center;filter:drop-shadow(0 3px 4px #0006);animation:bnc 1.4s ease-in-out infinite}
+.me[data-sk=dot4]::after{content:'🍔'}
+.me[data-sk=dot6]::after{content:'👑'}
+.me[data-sk=dot6]{filter:drop-shadow(0 0 8px #ffd54f) drop-shadow(0 3px 3px #0006)}
+.me[data-sk=dot5]{width:22px;height:22px;background:conic-gradient(#ff3b30,#ff9500,#ffcc00,#34c759,#0a84ff,#bf5af2,#ff3b30);border-color:#fff;animation:spn 2s linear infinite}
+@keyframes flk{to{box-shadow:0 0 0 7px #ff6d0030,0 0 24px 9px #ff3d0099;transform:scale(1.06)}}
+@keyframes flo{50%{transform:translateY(-6px)}}
+@keyframes neo{70%{box-shadow:0 0 6px 2px #00e5ff,0 0 0 16px #00e5ff00}100%{box-shadow:0 0 6px 2px #00e5ff,0 0 0 0 #00e5ff00}}
+@keyframes bnc{50%{transform:translateY(-5px) scale(1.06)}}
+@keyframes spn{to{transform:rotate(360deg)}}
+/* cadres de pseudo */
+.nm{display:inline-block;border-radius:8px;padding:0 6px;font-weight:700}
+.nm.cd1{background:linear-gradient(120deg,#8a6d1d,#f7d774 30%,#fff6c9 45%,#e2b13c 60%,#8a6d1d);background-size:250% 100%;color:#2b1d00;animation:shn 3s linear infinite;box-shadow:0 0 8px #f7d77466}
+.nm.cd2{color:#fff;background:#140026;border:2px solid #ff2bd6;box-shadow:0 0 6px #ff2bd6,inset 0 0 6px #00e5ff;text-shadow:0 0 6px #00e5ff;animation:nfl 2.2s infinite}
+.nm.cd3{color:#fff;background:linear-gradient(0deg,#7a0000,#ff3d00 40%,#ffb300 80%,#ffe082);background-size:100% 220%;animation:brz 1.2s ease-in-out infinite alternate;text-shadow:0 1px 2px #0008}
+.nm.cd4{color:#fff;background:radial-gradient(1px 1px at 20% 30%,#fff,#0000),radial-gradient(1px 1px at 70% 60%,#fff,#0000),radial-gradient(1.5px 1.5px at 45% 80%,#fff,#0000),linear-gradient(120deg,#1a0b3d,#4c1d95,#1e3a8a);box-shadow:0 0 10px #7c3aed88}
+.nm.cd5{color:#1b1b2f;background:linear-gradient(115deg,#e0f7ff,#ffd1f7,#d4ffe8,#fff6c9,#d6e4ff,#e0f7ff);background-size:300% 100%;animation:shn 2.5s linear infinite;box-shadow:0 0 0 1px #fff inset,0 0 12px #b9e6ff}
+@keyframes shn{to{background-position:-250% 0}}
+@keyframes nfl{0%,100%{opacity:1}92%{opacity:1}94%{opacity:.4}96%{opacity:1}}
+@keyframes brz{to{background-position:0 100%}}
+/* bouton d'entrée */
+.mnb{display:flex;align-items:center;gap:12px;width:100%;margin:14px 0 4px;padding:12px 14px;border-radius:16px;text-align:left;color:#fff;
+ background:linear-gradient(135deg,#ff5f6d,#ffc371 45%,#7c3aed);background-size:200% 200%;animation:mnbg 6s ease infinite;box-shadow:0 6px 18px #7c3aed40}
+.mnb .mnt{flex:1;display:flex;flex-direction:column}.mnb .mnt b{font-size:17px}.mnb .mnt small{opacity:.92;font-size:13px}.mnb .mna{font-size:22px;font-weight:800}
+@keyframes mnbg{50%{background-position:100% 100%}}
+.mnd{width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 4px #ffffff40;flex:none;position:relative;display:inline-block}
+.mnd.big{width:30px;height:30px}
+.mnd[data-sk=dot1]{background:radial-gradient(circle at 50% 70%,#fff3b0,#ffb300 35%,#ff3d00 75%);box-shadow:0 0 14px 4px #ff3d0099;animation:flk .18s infinite alternate}
+.mnd[data-sk=dot3]{background:#00e5ff;box-shadow:0 0 10px 3px #00e5ff}
+.mnd[data-sk=dot5]{background:conic-gradient(#ff3b30,#ff9500,#ffcc00,#34c759,#0a84ff,#bf5af2,#ff3b30);animation:spn 2s linear infinite}
+.mnd[data-sk=dot2],.mnd[data-sk=dot4],.mnd[data-sk=dot6]{background:none;border:0;box-shadow:none;width:auto;height:auto;font-size:24px;line-height:1}
+.mnd.big[data-sk=dot2],.mnd.big[data-sk=dot4],.mnd.big[data-sk=dot6]{font-size:34px}
+.mnd[data-sk=dot2]::after{content:'👻'}.mnd[data-sk=dot4]::after{content:'🍔'}.mnd[data-sk=dot6]::after{content:'👑'}
+/* feuille */
+#prof{position:fixed;inset:0;z-index:2200;background:#0009;backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .25s}
+#prof.on{opacity:1}
+#prof .pfs{width:100%;max-width:560px;max-height:94vh;overflow:auto;background:var(--bg);border-radius:24px 24px 0 0;padding:14px 14px 30px;transform:translateY(40px);transition:transform .3s cubic-bezier(.2,.9,.3,1.2)}
+#prof.on .pfs{transform:none}
+@media (min-width:821px){#prof{align-items:center}#prof .pfs{border-radius:24px}}
+.nope{animation:shk .4s}
+@keyframes shk{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+/* carte de membre */
+.mcard{position:relative;overflow:hidden;border-radius:20px;padding:16px;color:#fff;background:linear-gradient(135deg,#334155,#0f172a);box-shadow:0 10px 30px #0004}
+.mcard.lv1{background:linear-gradient(135deg,#0ea5e9,#1e3a8a)}.mcard.lv2{background:linear-gradient(135deg,#10b981,#065f46)}
+.mcard.lv3{background:linear-gradient(135deg,#f43f5e,#7c3aed)}.mcard.lv4{background:linear-gradient(135deg,#f59e0b,#b45309 50%,#7c2d12)}
+.mcard .holo{position:absolute;inset:-50%;background:linear-gradient(115deg,#0000 40%,#ffffff38 48%,#ffffff10 52%,#0000 60%);animation:hol 4.5s ease-in-out infinite;pointer-events:none}
+@keyframes hol{0%{transform:translateX(-40%)}60%,100%{transform:translateX(40%)}}
+.mtop{display:flex;gap:12px;align-items:center;position:relative}.mtop>div{flex:1;min-width:0}.mtop small{opacity:.8;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.mname{font-size:20px;font-weight:800;margin:2px 0 4px}.mname .nm.cd0{padding:0}
+.mlv{display:inline-block;background:#ffffff2e;border:1px solid #ffffff55;border-radius:20px;padding:2px 10px;font-size:13px;font-weight:700}
+.mx{width:34px;height:34px;border-radius:50%;background:#ffffff2e;color:#fff;font-size:20px;flex:none;align-self:flex-start}
+.mbar{height:8px;border-radius:8px;background:#ffffff30;margin:14px 0 4px;overflow:hidden;position:relative}.mbar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#fff,#fde68a);box-shadow:0 0 10px #fde68a}
+.msub{font-size:12px;opacity:.85;position:relative}
+.mst{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;position:relative}.mst div{background:#ffffff1f;border-radius:12px;padding:8px 4px;text-align:center}
+.mst b{display:block;font-size:18px}.mst small{font-size:11px;opacity:.85}
+.ptabs{display:flex;gap:6px;margin:14px 0 6px;background:var(--soft);border-radius:14px;padding:4px}
+.ptabs button{flex:1;min-height:38px;border-radius:10px;font-weight:700;color:var(--mut)}.ptabs button[aria-pressed=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 4px #0002}
+.pnote{font-size:13px;margin:10px 2px}
+/* badges */
+.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+@media (min-width:480px){.bgrid{grid-template-columns:repeat(4,1fr)}}
+.bdg{border-radius:16px;padding:10px 6px;text-align:center;background:var(--soft);display:flex;flex-direction:column;align-items:center;gap:2px}
+.bdg .be{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:var(--line);filter:grayscale(1);opacity:.55;margin-bottom:4px}
+.bdg b{font-size:13px;line-height:1.15}.bdg small{font-size:11px;color:var(--mut);line-height:1.2}
+.bdg.ok{background:linear-gradient(160deg,#fff7d6,#ffe0f0);color:#1f2328}.bdg.ok small{color:#5b4a3a}
+[data-theme=dark] .bdg.ok{background:linear-gradient(160deg,#3b2f12,#3b1430);color:#fff}[data-theme=dark] .bdg.ok small{color:#e8d9c4}
+.bdg.ok .be{filter:none;opacity:1;background:conic-gradient(from 0deg,#ffd54f,#ff6b6b,#bf5af2,#64d2ff,#34c759,#ffd54f);box-shadow:0 0 14px #ffb74d99;position:relative}
+.bdg.ok .be::before{content:'';position:absolute;inset:4px;border-radius:50%;background:var(--bg)}
+.bdg.ok .be{isolation:isolate}.bdg.ok .be>*{position:relative}
+.bp{width:80%;height:5px;border-radius:5px;background:var(--line);margin-top:4px;overflow:hidden}.bp i{display:block;height:100%;background:var(--red)}
+.bdg .bn{font-weight:700}
+/* boutique */
+.solde{margin:8px 0 0;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,#fde68a,#fbcfe8);color:#3a2300;font-size:15px}.solde b{font-size:20px}
+.sh{margin:18px 2px 6px}
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media (min-width:480px){.sgrid{grid-template-columns:repeat(3,1fr)}}
+.sit{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px;border-radius:16px;background:var(--soft);border:2px solid transparent;text-align:center;transition:transform .15s}
+.sit:active{transform:scale(.96)}.sit b{font-size:14px}.sit small{font-size:11px;color:var(--mut);line-height:1.25;min-height:28px}
+.sit .pr{margin-top:4px;font-size:13px;font-weight:800;padding:4px 12px;border-radius:20px;background:var(--red);color:var(--on-red)}
+.sit.own .pr{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.sit.eq{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 25%,transparent)}.sit.eq .pr{background:none;border:0;color:var(--red)}
+.sp{height:46px;display:grid;place-items:center;margin-bottom:2px}
+.sp.dot{width:46px}.sp.dot[data-sk]{position:relative}
+.sp.dot::before{content:'';width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 5px #1a73e833,0 1px 4px #0006}
+.sp.dot[data-sk=dot1]::before{background:radial-gradient(circle at 50% 70%,#fff3b0,#ffb300 35%,#ff3d00 75%);box-shadow:0 0 16px 5px #ff3d0088;animation:flk .18s infinite alternate}
+.sp.dot[data-sk=dot3]::before{background:#00e5ff;box-shadow:0 0 6px 2px #00e5ff;animation:neo 1.6s infinite}
+.sp.dot[data-sk=dot5]::before{width:22px;height:22px;background:conic-gradient(#ff3b30,#ff9500,#ffcc00,#34c759,#0a84ff,#bf5af2,#ff3b30);animation:spn 2s linear infinite}
+.sp.dot[data-sk=dot2]::before{content:'👻';width:auto;height:auto;background:none;border:0;box-shadow:none;font-size:30px;animation:flo 2.4s ease-in-out infinite}
+.sp.dot[data-sk=dot4]::before{content:'🍔';width:auto;height:auto;background:none;border:0;box-shadow:none;font-size:30px;animation:bnc 1.4s ease-in-out infinite}
+.sp.dot[data-sk=dot6]::before{content:'👑';width:auto;height:auto;background:none;border:0;box-shadow:none;font-size:30px;filter:drop-shadow(0 0 8px #ffd54f);animation:bnc 1.4s ease-in-out infinite}
+.sp.acc{width:46px;border-radius:50%;height:46px;background:#d6281f;box-shadow:inset 0 -6px 12px #0003}
+.sp.acc[data-a=acc1]{background:linear-gradient(135deg,#a78bfa,#6d28d9)}.sp.acc[data-a=acc2]{background:linear-gradient(135deg,#38bdf8,#075985)}
+.sp.acc[data-a=acc3]{background:linear-gradient(135deg,#f9a8d4,#be185d)}.sp.acc[data-a=acc4]{background:linear-gradient(135deg,#fde68a,#b45309)}
+.sp.acc[data-a=acc0]{background:linear-gradient(135deg,#ff6b5e,#b91c1c)}
+.sp.fx{font-size:30px}.sp.cad{font-size:14px}
+.pnom{font-size:22px;font-weight:800;text-align:center;margin:6px 0;padding:12px;border-radius:14px;background:var(--soft)}
+.pch{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.pch .chip{flex:none}
+/* Gardien */
+.gard{display:flex;gap:12px;align-items:center;margin:12px 0 4px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,#fff8e1,#ffe9c7);color:#3a2600;border:1px solid #ffd58a}
+[data-theme=dark] .gard{background:linear-gradient(135deg,#3a2a08,#2b1d06);color:#ffe7b3;border-color:#7a5a12}
+.gard>div{display:flex;flex-direction:column;gap:2px;min-width:0}.gard b{font-size:16px}.gard small{font-size:12px;opacity:.85}
+.gard .cr{font-size:30px;filter:drop-shadow(0 0 6px #ffc10799);animation:bnc 2.2s ease-in-out infinite}
+.gard.g0 .cr{filter:grayscale(1);opacity:.5;animation:none}.gard.g0{background:var(--soft);border-color:var(--line);color:var(--ink)}
+.gard.gme{background:linear-gradient(135deg,#ffe082,#ffb74d,#ff8a65);color:#2b1500;border-color:#ffb74d;box-shadow:0 6px 18px #ff8a6555}
+.gexp{text-align:center;padding:14px;border-radius:16px;background:var(--soft);margin-top:8px}.gexp p{margin:8px 0;font-size:14px}
+.gcr{font-size:46px;filter:drop-shadow(0 0 12px #ffc107aa);animation:bnc 2.2s ease-in-out infinite}
+/* badge débloqué */
+#cel{position:fixed;inset:0;z-index:2600;background:#000b;display:grid;place-items:center;opacity:0;transition:opacity .25s;padding:20px}
+#cel.on{opacity:1}
+.celc{position:relative;width:min(340px,92vw);padding:34px 20px 22px;border-radius:26px;text-align:center;color:#fff;overflow:hidden;
+ background:radial-gradient(circle at 50% 30%,#7c3aed,#1e1b4b 70%);box-shadow:0 0 60px #7c3aed99;transform:scale(.6) rotate(-6deg);transition:transform .45s cubic-bezier(.2,1.6,.4,1)}
+#cel.on .celc{transform:none}
+.celc .rays{position:absolute;left:50%;top:92px;width:520px;height:520px;margin:-260px 0 0 -260px;background:repeating-conic-gradient(#ffffff22 0 10deg,#0000 10deg 20deg);animation:spn 12s linear infinite;pointer-events:none}
+.celb{position:relative;width:116px;height:116px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;font-size:58px;
+ background:radial-gradient(circle,#fff 0 55%,#ffd54f 56%,#ff9800);box-shadow:0 0 0 6px #ffffff33,0 0 40px #ffd54f;animation:pop .7s cubic-bezier(.2,1.8,.4,1)}
+@keyframes pop{0%{transform:scale(0) rotate(-90deg)}100%{transform:none}}
+.celc small{position:relative;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:#fde68a}
+.celc h2{position:relative;margin:4px 0 2px;font-size:26px}.celc p{position:relative;margin:0 0 16px;font-weight:800;color:#86efac;font-size:18px}
+.celc .geob{position:relative}
+#fxc{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:2700;display:none}
+@media (prefers-reduced-motion:reduce){.me[data-sk],.mnd,.sp::before,.nm,.mcard .holo,.celc .rays,.celb,.gard .cr,.gcr,.mnb{animation:none!important}}
 </style>
 </head>
 <body>
@@ -513,6 +644,7 @@ function renderDetail(){const r=sel;if(!r)return;view='detail';const st=r.st=sta
  ${tg.length||(c&&c.lc&&SRC!=='auto')?`<div>${c.lc&&SRC!=='auto'?`<span class="tagl w">${c.lc.c} personne${c.lc.c>1?'s':''} comptée${c.lc.c>1?'s':''} sur photo ${ago(c.lc.ts)}</span>`:''}${tg.map(([k,n])=>`<span class="tagl w">${TAGS[k]}${n>1?' ×'+n:''}</span>`).join('')}</div>`:''}
  ${tp?`<p class="tip">${tp} <span class="mut" style="font-weight:400">(estimation)</span></p>`:''}
  ${SRC!=='man'?`<h3>Aujourd'hui, heure par heure <span class="mut" style="font-weight:400">(estimation)</span></h3>${dayChart(r)}`:''}
+ ${gardBox(r)}
  <h3>Tu y es ? Ça attend combien ?</h3>
  ${c&&can&&SRC!=='auto'?`<p class="note cf">Quelqu'un a dit « ${LV[lvOf(c.b)].n} » ${ago(c.last)}. Toujours vrai ? <button class="chip" data-l="${lvOf(c.b)}">Oui, pareil</button></p>`:''}
  ${r.dr?`<div class="seg"><button data-z="salle" aria-pressed="${zone==='salle'}">En salle</button><button data-z="drive" aria-pressed="${zone==='drive'}">Au drive</button></div>`:''}
@@ -549,6 +681,7 @@ function back(){if(TAB==='rs')return rsBack();setSel(null);setHash('');setPanel(
 $('panel').addEventListener('click',e=>{const t=e.target;
  if(t.closest('#handle')){if(!dragged)setPanel(PS[($('panel').classList.contains('reduit')?0:$('panel').classList.contains('big')?2:1)+1]||'mini');dragged=false;return}
  if($('panel').classList.contains('reduit'))return setPanel('mid');
+ if(t.closest('[data-prof]'))return profOpen();
  if(TAB==='rs'&&rsClick(t))return;
  if(t.closest('#backBtn'))return back();
  const sb=t.closest('[data-s]');if(sb){SRC=sb.dataset.s;store.set('foodloc-src',SRC);return refresh()}
@@ -573,7 +706,7 @@ const meFresh=()=>ME&&Date.now()-ME.ts<3*60e3;
 /* 1 = info donnée sur place (à moins de 200 m), -1 = donnée de loin (plus de 500 m), 0 = position inconnue */
 const geoFlag=r=>{if(!meFresh())return 0;const d=distM(ME.lat,ME.lon,r.lat,r.lon);return d<=200?1:d>500?-1:0};
 function setMe(p){ME={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy||0,ts:Date.now()};
- if(!meMk){const el=document.createElement('div');el.className='me';meMk=new maplibregl.Marker({element:el}).setLngLat([ME.lon,ME.lat]).addTo(map)}else meMk.setLngLat([ME.lon,ME.lat]);
+ if(!meMk){const el=document.createElement('div');el.className='me';meMk=new maplibregl.Marker({element:el}).setLngLat([ME.lon,ME.lat]).addTo(map);skinMe()}else meMk.setLngLat([ME.lon,ME.lat]);
  banner();if(TAB==='rs'&&PAUSE)rsBuild();if(view==='home'&&Date.now()-(setMe.t||0)>5e3){setMe.t=Date.now();filters();renderHome()}}
 function locate(){if(!navigator.geolocation)return toast('Position non disponible sur cet appareil.');
  navigator.geolocation.getCurrentPosition(p=>{setMe(p);back();filters();if(TAB==='rs'){map.flyTo({center:[ME.lon,ME.lat],zoom:15.5});toast('Voilà les restaurants autour de toi');if(watchId==null)watchId=navigator.geolocation.watchPosition(setMe,()=>{},{enableHighAccuracy:true,maximumAge:20e3});return}const nr=R.filter(visible).map(r=>[r,dOf(r)]).sort((a,b)=>a[1]-b[1]).slice(0,3).filter(x=>x[1]<15000);
@@ -619,7 +752,7 @@ let busy=false;
 /* les données partagées ne sont pas fiables par défaut : on ne garde que les champs attendus */
 const clean=(x,id)=>x&&typeof x.r==='string'&&byId[x.r]&&[1,2,3].includes(x.l)&&typeof x.ts==='number'&&x.ts<=Date.now()+60e3?{r:x.r,l:x.l,z:x.z==='drive'?'drive':'salle',ts:x.ts,u:typeof x.u==='string'?x.u:'',tg:Array.isArray(x.tg)?x.tg.filter(k=>typeof k==='string'&&TAGS[k]).slice(0,6):[],p:[1,2,3,4,5].includes(x.p)?x.p:0,g:[-1,1].includes(x.g)?x.g:0,w:x.w>0&&x.w<=90?Math.round(x.w):0,q:[1,2,3,4].includes(x.q)?x.q:0,c:Number.isInteger(x.c)&&x.c>0&&x.c<=300?x.c:0,_id:id}:null;
 async function send(l,r=sel,extra){if(!r||busy)return;busy=true;const doc={v:4,r:r.id,l,z:r===sel?zone:'salle',ts:Date.now(),u:uid||'moi',tg:[],p:0,g:geoFlag(r),w:0,q:0,c:0,...extra};
- try{if(mode==='db'){await db.collection('reports').add(doc);prune()}else{reports.push(clean(doc));saveLocal()}addPts(ptsOf(doc));toast(`Merci ! +${ptsOf(doc)} points. ${BR[r.b].n} ${r.name} : ${LV[l].n}${doc.w?` (attente mesurée : ${doc.w} min)`:''}`)}
+ const flash=!reports.some(x=>x.r===r.id&&Date.now()-x.ts<WIN);try{if(mode==='db'){await db.collection('reports').add(doc);prune()}else{reports.push(clean(doc));saveLocal()}addPts(ptsOf(doc));moiLog({t:'ff',r:r.id,c:r.city,ts:doc.ts,g:doc.g,w:doc.w,f:flash?1:0});toast(`Merci ! +${ptsOf(doc)} points. ${BR[r.b].n} ${r.name} : ${LV[l].n}${doc.w?` (attente mesurée : ${doc.w} min)`:''}`)}
  catch(e){if(e&&e.code==='invalid_argument'){mode='ro'}toast(e&&e.code==='quota_exceeded'?'Base pleine, info non envoyée.':'Info non envoyée, réessaie.')}
  busy=false;refresh()}
 /* détail facultatif ajouté à sa propre info (tags, nombre de personnes) */
@@ -650,9 +783,9 @@ function addPts(n){if(!n)return;if(PTS.m!==mois())PTS={m:mois(),p:0,t:PTS.t};PTS
 let RANK=null,myH=null;
 async function hashUid(){try{if(!uid||uid==='moi'||!crypto.subtle)return;const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(uid));myH=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,10);if(view==='home')renderHome()}catch(e){}}
 function ptsBox(){const i=NIVEAUX.findLastIndex(n=>PTS.t>=n[0]),nx=NIVEAUX[i+1];
- let h=`<h3>Tes points</h3><div class="pts"><b>${PTS.t}</b> point${PTS.t>1?'s':''} · niveau <b>${NIVEAUX[i][1]}</b></div><p class="mut" style="margin:2px 0 0;font-size:13px">${nx?`Encore ${nx[0]-PTS.t} points pour passer ${nx[1]}.`:'Niveau maximum.'} Une info = 10 points, plus si tu es sur place ou si tu chronomètres.</p>`;
+ let h=profBtn()+`<h3>Tes points</h3><div class="pts"><b>${PTS.t}</b> point${PTS.t>1?'s':''} · niveau <b>${NIVEAUX[i][1]}</b></div><p class="mut" style="margin:2px 0 0;font-size:13px">${nx?`Encore ${nx[0]-PTS.t} points pour passer ${nx[1]}.`:'Niveau maximum.'} Une info = 10 points, plus si tu es sur place ou si tu chronomètres.</p>`;
  if(RANK&&RANK.pts&&RANK.mois===mois()){const all=Object.entries(RANK.pts).sort((a,b)=>b[1]-a[1]),me=myH?all.findIndex(x=>x[0]===myH):-1;
-  if(all.length)h+=`<h3>Classement du mois</h3>${me>=0?`<p class="mut" style="margin:0 0 6px;font-size:13px">Tu es ${me+1}${me?'e':'er'} sur ${all.length}.</p>`:''}<ol class="rank">${all.slice(0,5).map(([k,p])=>`<li${k===myH?' class="me2"':''}><span>${esc(pseudo(k))}${k===myH?' (toi)':''}</span><b>${Math.round(p)}</b></li>`).join('')}</ol><p class="mut" style="font-size:12px;margin:4px 0 0">Mis à jour toutes les heures. Les pseudos sont tirés au hasard.</p>`}
+  if(all.length)h+=`<h3>Classement du mois</h3>${me>=0?`<p class="mut" style="margin:0 0 6px;font-size:13px">Tu es ${me+1}${me?'e':'er'} sur ${all.length}.</p>`:''}<ol class="rank">${all.slice(0,5).map(([k,p])=>`<li${k===myH?' class="me2"':''}><span>${tagNom(k)}${k===myH?' (toi)':''}</span><b>${Math.round(p)}</b></li>`).join('')}</ol><p class="mut" style="font-size:12px;margin:4px 0 0">Mis à jour toutes les heures. Pseudos tirés au hasard, ou choisis dans la boutique.</p>`}
  return h}
 /* ===== signaler un problème sur un resto ===== */
 const PROBS=[null,'Fermé définitivement','Mal placé sur la carte','Horaires faux','Info fausse ou blague','Autre problème'];let probOpen=false;
@@ -713,7 +846,7 @@ async function connect(){
 
 /* ===== onglet Restaurants : chances d'avoir une table sans réserver, chrono du service, ma pause déj ===== */
 /* liste : OpenStreetMap (© les contributeurs, ODbL), découpée en cases chargées à la demande (data/rs/) */
-const RS_ON=!!(window.NARABU_RS||CFG.restos);
+const RS_ON=!!window.NARABU_RS||CFG.restos!==false;
 let TAB=RS_ON&&store.get('narabu-tab')==='rs'?'rs':'ff';
 const RT={fr:'Français',it:'Pizza & italien',cr:'Crêperie',as:'Asiatique',mo:'Monde',au:'Restaurant'};
 const RTF=['fr','it','cr','as','mo'];
@@ -839,7 +972,7 @@ async function rsSend(k,s,m,via,sv){const r=rsSel;if(!r||rsBusySend)return;
  rsBusySend=true;const doc={v:1,r:r.id,t:r.tile,k,s:s||'',m:Math.round(m||0),via:via||'place',sv:sv||'',ts:Date.now(),u:uid||'moi'};
  try{if(db&&!rsLocal)await db.collection('rreports').add(doc);else{rsRep.push(doc);store.set('narabu-rr',JSON.stringify(rsRep.filter(x=>Date.now()-x.ts<60*86400e3)))}
   if(k==='svc'){const a=rsSvc.get(r.id)||[];a.push(doc.m);rsSvc.set(r.id,a)}else if(rsLocal===false&&!rsRep.includes(doc))rsRep.push(doc);
-  last[key]=Date.now();store.set('narabu-rlast',JSON.stringify(last));addPts(k==='svc'?5:10);toast(k==='svc'?'Merci ! +5 points. Ça aide les gens pressés.':'Merci ! +10 points. Ton info est visible par tout le monde.')}
+  last[key]=Date.now();store.set('narabu-rlast',JSON.stringify(last));addPts(k==='svc'?5:10);moiLog({t:'rs',r:r.id,c:r.city||'',ts:doc.ts,g:doc.via==='place'?1:0,w:0});toast(k==='svc'?'Merci ! +5 points. Ça aide les gens pressés.':'Merci ! +10 points. Ton info est visible par tout le monde.')}
  catch(e){toast('Envoi impossible pour le moment. Réessaie dans un instant.')}
  rsBusySend=false;rsBuild();rsDetail()}
 
@@ -918,6 +1051,146 @@ function rsSearch(q){const box=$('res');let i=0,h='';hits=[];
  if(rs.length)h+='<div class="h">Restaurants sur la carte</div>'+rs.map(r=>{hits.push({t:'rsr',v:r});r.st=r.st||rsState(r);return `<button data-i="${i++}">${rsBadge(r.st)}<span><b>${esc(r.name)}</b><br><small class="mut">${esc(r.lab||RT[r.ty])}${r.city?' · '+esc(r.city):''}</small></span></button>`}).join('');
  box.innerHTML=h||'<div class="h" style="padding:14px">Rien trouvé. Tape une ville, puis cherche le resto une fois sur place.</div>';box.style.display='block'}
 async function rsRoute(){const m=location.hash.match(/^#rs-(\w+)-(s?-?\d+_-?\d+)$/);if(!m||!RS_ON)return false;if(TAB!=='rs')setTab('rs');const l=await rsGet(m[2]),r=l.find(x=>x.osm===m[1]);if(r){rsCur=[...new Set([...rsCur,...l])];rsBuild();rsOpenR(r,true)}return true}
+/* ===== Mon Narabu : badges, boutique, Gardien des restos ===== */
+/* journal de tes propres infos (gardé dans ton téléphone) : sert à calculer tes badges */
+let MOI=[];try{MOI=JSON.parse(store.get('narabu-moi')||'[]');if(!Array.isArray(MOI))MOI=[]}catch(e){MOI=[]}
+/* boutique : objets achetés, objets équipés, pseudo choisi, points dépensés, badges obtenus */
+let SHOP={own:['dot0','cad0','acc0','fx0'],eq:{dot:'dot0',cad:'cad0',acc:'acc0',fx:'fx0'},nom:null,s:0,b:{}};
+try{const s=JSON.parse(store.get('narabu-shop')||'null');if(s&&s.eq)SHOP={...SHOP,...s,eq:{...SHOP.eq,...s.eq},b:s.b||{}}}catch(e){}
+const shopSave=()=>store.set('narabu-shop',JSON.stringify(SHOP));
+const solde=()=>Math.max(0,PTS.t-SHOP.s);
+/* catalogue : t = type, p = prix. Les cadres et le pseudo sont visibles par tout le monde (classement, Gardien) */
+const ITEMS=[
+ {id:'dot0',t:'dot',n:'Classique',p:0,d:'Le point bleu de base'},
+ {id:'dot1',t:'dot',n:'Flamme',p:60,d:'Ça brûle sur la carte'},
+ {id:'dot2',t:'dot',n:'Fantôme',p:90,d:'Il flotte, il hante'},
+ {id:'dot3',t:'dot',n:'Néon',p:120,d:'Halo cyan qui pulse'},
+ {id:'dot4',t:'dot',n:'Burger',p:150,d:'Tu es le burger'},
+ {id:'dot5',t:'dot',n:'Arc-en-ciel',p:220,d:'Toutes les couleurs qui tournent'},
+ {id:'dot6',t:'dot',n:'Couronne',p:350,d:'Pour les rois de la file'},
+ {id:'cad0',t:'cad',n:'Aucun',p:0,d:'Pseudo tout simple'},
+ {id:'cad1',t:'cad',n:'Or',p:80,d:'Un cadre doré qui brille'},
+ {id:'cad2',t:'cad',n:'Néon',p:130,d:'Cyan et rose, ça clignote'},
+ {id:'cad3',t:'cad',n:'Braise',p:180,d:'Des flammes qui bougent'},
+ {id:'cad4',t:'cad',n:'Galaxie',p:260,d:'Violet profond et étoiles'},
+ {id:'cad5',t:'cad',n:'Diamant',p:420,d:'Reflets holographiques'},
+ {id:'acc0',t:'acc',n:'Narabu',p:0,d:'Rouge (jaune la nuit)'},
+ {id:'acc1',t:'acc',n:'Violet électrique',p:100,d:'Boutons et titres en violet'},
+ {id:'acc2',t:'acc',n:'Océan',p:100,d:'Bleu profond'},
+ {id:'acc3',t:'acc',n:'Rose bonbon',p:100,d:'Rose qui pétille'},
+ {id:'acc4',t:'acc',n:'Or',p:160,d:'Doré, pour les légendes'},
+ {id:'fx0',t:'fx',n:'Aucun',p:0,d:'Juste le message'},
+ {id:'fx1',t:'fx',n:'Confettis',p:80,d:'Une pluie de confettis à chaque info'},
+ {id:'fx2',t:'fx',n:'Feu d\'artifice',p:160,d:'Des explosions de couleurs à chaque info'}];
+const ITEM=Object.fromEntries(ITEMS.map(x=>[x.id,x]));
+const NOM_PRIX=100;
+/* badges : chacun rapporte 25 points la première fois */
+const BDG=[
+ ['premier','🥇','Première info','Donne ta toute première info',m=>[m.n,1]],
+ ['flash','⚡','Premier sur le coup','La première info sur un resto depuis 1 h 30',m=>[m.flash,1]],
+ ['terrain','📍','Sur le terrain','10 infos données sur place',m=>[m.place,10]],
+ ['chrono','⏱️','Chronométreur','Chronomètre une attente',m=>[m.chrono,1]],
+ ['chrono10','🏁','Maître du chrono','10 attentes chronométrées',m=>[m.chrono,10]],
+ ['matin','🌅','Lève-tôt','Une info avant 9 h',m=>[m.matin,1]],
+ ['nuit','🌙','Oiseau de nuit','Une info entre minuit et 5 h',m=>[m.nuit,1]],
+ ['fidele','❤️','Fidèle','5 infos sur le même resto',m=>[m.fidele,5]],
+ ['expl','🗺️','Explorateur','Des infos dans 3 villes',m=>[m.villes,3]],
+ ['globe','🌍','Globe-trotteur','Des infos dans 10 villes',m=>[m.villes,10]],
+ ['serie3','🔥','En feu','Des infos 3 jours de suite',m=>[m.serie,3]],
+ ['serie7','☄️','Inarrêtable','Des infos 7 jours de suite',m=>[m.serie,7]],
+ ['gourmet','🍽️','Gourmet','Une info dans l\'onglet Restaurants',m=>[m.rs,1]],
+ ['gardien','👑','Gardien','Deviens le Gardien d\'un resto',m=>[m.gard,1]],
+ ['podium','🏆','Podium','Sois dans le top 3 du mois',m=>[m.podium,1]],
+ ['legende','💎','Légende','Atteins 1 500 points',m=>[PTS.t,1500]]];
+const jourDe=ts=>new Intl.DateTimeFormat('fr-CA',{timeZone:'Europe/Paris'}).format(new Date(ts));
+const heureDe=ts=>+new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',hour:'2-digit',hourCycle:'h23'}).format(new Date(ts));
+function mesGardes(){if(!RANK||!RANK.g||RANK.mois!==mois()||!myH)return[];return Object.entries(RANK.g).filter(([,g])=>g[0]===myH).map(([id,g])=>[id,g[1]])}
+function bdgStats(){const ff=MOI.filter(x=>x.t==='ff'),parR={},jours=new Set(MOI.map(x=>jourDe(x.ts)));for(const x of ff)parR[x.r]=(parR[x.r]||0)+1;
+ let serie=0;for(const j of jours){let k=0,d=new Date(j+'T12:00:00');while(jours.has(jourDe(d.getTime()-k*86400e3)))k++;serie=Math.max(serie,k)}
+ const rk=RANK&&RANK.pts&&RANK.mois===mois()&&myH?Object.entries(RANK.pts).sort((a,b)=>b[1]-a[1]).findIndex(x=>x[0]===myH):-1;
+ return{n:ff.length,flash:ff.filter(x=>x.f).length,place:ff.filter(x=>x.g===1).length,chrono:ff.filter(x=>x.w>0).length,matin:MOI.filter(x=>{const h=heureDe(x.ts);return h>=5&&h<9}).length,
+  nuit:MOI.filter(x=>heureDe(x.ts)<5).length,fidele:Math.max(0,...Object.values(parR)),villes:new Set(MOI.map(x=>norm(x.c||'')).filter(Boolean)).size,serie,rs:MOI.filter(x=>x.t==='rs').length,
+  gard:mesGardes().length,podium:rk>=0&&rk<3&&Object.keys(RANK.pts).length>=3?1:0}}
+let CELQ=[];
+function bdgCheck(){const m=bdgStats();let neuf=0;for(const [id,e,n] of BDG){if(SHOP.b[id])continue;const [c,t]=BDG.find(b=>b[0]===id)[4](m);if(c>=t){SHOP.b[id]=Date.now();neuf++;CELQ.push({e,n,id})}}
+ if(neuf){addPts(25*neuf);shopSave();celShow()}}
+function moiLog(o){MOI.push(o);if(MOI.length>800)MOI=MOI.slice(-800);store.set('narabu-moi',JSON.stringify(MOI));bdgCheck();fxPlay()}
+/* noms : ton pseudo choisi (boutique), sinon le pseudo tiré au hasard. Le cadre se voit dans le classement et sur les restos */
+const nomDe=h=>{if(!h)return SHOP.nom&&SHOP.nom[0]>=0?`${PSA[SHOP.nom[0]]} ${PSB[SHOP.nom[1]]}`:'Toi';const p=h===myH&&SHOP.nom?SHOP.nom:RANK&&RANK.n&&RANK.n[h];
+ if(p&&p[0]>=0&&p[0]<PSA.length&&p[1]>=0&&p[1]<PSB.length)return`${PSA[p[0]]} ${PSB[p[1]]} ${parseInt(h.slice(4,6),16)%100}`;return pseudo(h)};
+const cadreDe=h=>!h||h===myH?+SHOP.eq.cad.slice(3):RANK&&RANK.n&&RANK.n[h]?+RANK.n[h][2]||0:0;
+const tagNom=h=>`<span class="nm cd${cadreDe(h)}">${esc(nomDe(h))}</span>`;
+/* les objets équipés s'appliquent tout de suite : couleur de l'appli, point sur la carte */
+function shopApply(){document.documentElement.dataset.acc=SHOP.eq.acc;skinMe()}
+function skinMe(){const el=typeof meMk!=='undefined'&&meMk&&meMk.getElement();if(el)el.dataset.sk=SHOP.eq.dot}
+/* profil partagé : seulement le pseudo choisi et le cadre (des numéros dans une liste), rien d'autre */
+async function profSync(){if(!db||mode!=='db'||!uid||uid==='moi')return;const c=+SHOP.eq.cad.slice(3),[a,n]=SHOP.nom||[-1,-1];
+ try{await db.collection('profils').doc(uid).set({a,n,c,ts:Date.now()})}catch(e){}}
+/* ===== effets : confettis, feu d'artifice (rien si l'appareil demande moins d'animations) ===== */
+function fxCanvas(){let c=$('fxc');if(!c){c=document.createElement('canvas');c.id='fxc';document.body.appendChild(c)}c.width=innerWidth*devicePixelRatio;c.height=innerHeight*devicePixelRatio;return c}
+function fxPlay(kind){kind=kind||SHOP.eq.fx;if(calme||kind==='fx0')return;const c=fxCanvas(),x=c.getContext('2d'),R=devicePixelRatio,W=c.width,H=c.height,P=[];
+ const COL=['#ff3b30','#ffcc00','#34c759','#0a84ff','#bf5af2','#ff9f0a','#ff2d55','#64d2ff'];
+ if(kind==='fx1'){for(let i=0;i<150;i++)P.push({x:W/2+(Math.random()-.5)*W*.3,y:H*.35,vx:(Math.random()-.5)*16*R,vy:(-Math.random()*16-6)*R,g:.45*R,s:(4+Math.random()*6)*R,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:COL[i%8],l:1,sq:Math.random()<.5})}
+ else{for(let b=0;b<4;b++){const cx=W*(.2+.6*Math.random()),cy=H*(.18+.3*Math.random()),col=COL[(b*3)%8],d=b*9;for(let i=0;i<60;i++){const a=i/60*Math.PI*2,v=(3+Math.random()*5)*R;P.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:.08*R,s:3*R,c:col,l:1,d,tr:1})}}}
+ let f=0;c.style.display='block';(function step(){x.clearRect(0,0,W,H);let vivant=0;
+  for(const p of P){if(p.d&&f<p.d)continue;p.vx*=.985;p.vy=p.vy*.985+p.g;p.x+=p.vx;p.y+=p.vy;p.l-=p.tr?.012:.006;if(p.l<=0||p.y>H+40)continue;vivant++;x.globalAlpha=Math.max(0,p.l);x.fillStyle=p.c;
+   if(p.tr){x.beginPath();x.arc(p.x,p.y,p.s,0,7);x.fill();x.globalAlpha*=.35;x.beginPath();x.arc(p.x-p.vx*2,p.y-p.vy*2,p.s*.8,0,7);x.fill()}
+   else{p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);p.sq?x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2):(x.beginPath(),x.arc(0,0,p.s/2.4,0,7),x.fill());x.restore()}}
+  f++;if(vivant&&f<260)requestAnimationFrame(step);else{x.clearRect(0,0,W,H);c.style.display='none'}})()}
+/* ===== badge débloqué : grande carte qui brille ===== */
+function celShow(){if(!CELQ.length||$('cel'))return;const b=CELQ.shift(),el=document.createElement('div');el.id='cel';
+ el.innerHTML=`<div class="celc"><div class="rays"></div><div class="celb">${b.e}</div><small>Badge débloqué</small><h2>${esc(b.n)}</h2><p>+25 points</p><button class="geob" data-celok>Trop bien</button></div>`;
+ document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add('on'));fxPlay('fx1');
+ el.addEventListener('click',e=>{if(e.target.closest('[data-celok]')||e.target===el){el.remove();if(view==='home'&&TAB!=='rs')renderHome();if($('prof'))profRender();setTimeout(celShow,250)}})}
+/* ===== fiche d'un resto : le Gardien ===== */
+function gardBox(r){if(!RANK||RANK.mois!==mois())return'';const g=RANK.g&&RANK.g[r.id];
+ if(!g)return`<div class="gard g0"><span class="cr">👑</span><div><b>Pas encore de Gardien ce mois-ci</b><small>Donne des infos sur place ici : la personne la plus active du mois devient le Gardien de ce resto.</small></div></div>`;
+ const moi=g[0]===myH;return`<div class="gard${moi?' gme':''}"><span class="cr">👑</span><div><small>Gardien de ce resto ce mois-ci</small><b>${moi?'C\'est toi !':tagNom(g[0])}</b><small>${g[1]} points ici${moi?'. Garde ta couronne : continue à donner des infos.':'. Fais mieux pour lui prendre la couronne.'}</small></div></div>`}
+/* ===== bouton d'entrée dans le panneau ===== */
+const profBtn=()=>`<button class="mnb" data-prof><span class="mnd" data-sk="${SHOP.eq.dot}"></span><span class="mnt"><b>Mon Narabu</b><small>${Object.keys(SHOP.b).length}/${BDG.length} badges · ${solde()} points à dépenser</small></span><span class="mna">→</span></button>`;
+/* ===== la feuille « Mon Narabu » ===== */
+let PTAB='badges',NOMTMP=null;
+function profOpen(tab){PTAB=tab||PTAB;let el=$('prof');if(!el){el=document.createElement('div');el.id='prof';el.innerHTML='<div class="pfs" role="dialog" aria-label="Mon Narabu"></div>';document.body.appendChild(el);el.addEventListener('click',profClick)}
+ bdgCheck();profRender();requestAnimationFrame(()=>el.classList.add('on'))}
+function profClose(){const el=$('prof');if(!el)return;el.classList.remove('on');setTimeout(()=>el.remove(),250);NOMTMP=null;if(view==='home'&&TAB!=='rs')renderHome()}
+function profRender(){const el=$('prof');if(!el)return;const i=NIVEAUX.findLastIndex(n=>PTS.t>=n[0]),nx=NIVEAUX[i+1],pr=nx?Math.round((PTS.t-NIVEAUX[i][0])/(nx[0]-NIVEAUX[i][0])*100):100,gs=mesGardes();
+ const card=`<div class="mcard lv${i}"><div class="holo"></div><div class="mtop"><span class="mnd big" data-sk="${SHOP.eq.dot}"></span><div><small>Carte de membre Narabu</small><div class="mname">${tagNom(myH)}</div><span class="mlv">${NIVEAUX[i][1]}</span></div><button class="mx" data-pclose aria-label="Fermer">×</button></div>
+  <div class="mbar"><i style="width:${pr}%"></i></div><div class="msub">${nx?`${nx[0]-PTS.t} points avant ${nx[1]}`:'Niveau maximum, respect.'}</div>
+  <div class="mst"><div><b>${PTS.t}</b><small>points gagnés</small></div><div><b>${solde()}</b><small>à dépenser</small></div><div><b>${Object.keys(SHOP.b).length}</b><small>badges</small></div><div><b>${gs.length}</b><small>couronne${gs.length>1?'s':''}</small></div></div></div>`;
+ const tabs=`<div class="ptabs">${[['badges','Badges'],['shop','Boutique'],['gard','Gardien']].map(([k,n])=>`<button data-ptab="${k}" aria-pressed="${PTAB===k}">${n}</button>`).join('')}</div>`;
+ let body='';
+ if(PTAB==='badges'){const m=bdgStats();body=`<div class="bgrid">${BDG.map(([id,e,n,d,f])=>{const ok=SHOP.b[id],[c,t]=f(m),p=Math.min(100,Math.round(Math.min(c,t)/t*100));
+   return`<div class="bdg${ok?' ok':''}"><div class="be"><span>${e}</span></div><b>${n}</b><small>${ok?'Obtenu le '+new Date(ok).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):d}</small>${ok?'':`<div class="bp"><i style="width:${p}%"></i></div><small class="bn">${Math.min(c,t)}/${t}</small>`}</div>`}).join('')}</div><p class="mut pnote">Chaque badge rapporte 25 points. Les badges sont gardés dans ce téléphone.</p>`}
+ else if(PTAB==='shop'){const sec=(t,titre,sous)=>`<h3 class="sh">${titre}</h3>${sous?`<p class="mut pnote" style="margin-top:0">${sous}</p>`:''}<div class="sgrid">${ITEMS.filter(x=>x.t===t).map(x=>{const own=SHOP.own.includes(x.id),eq=SHOP.eq[t]===x.id;
+   return`<button class="sit${eq?' eq':''}${own?' own':''}" data-buy="${x.id}"><span class="sp ${t}" ${t==='dot'?`data-sk="${x.id}"`:''} ${t==='acc'?`data-a="${x.id}"`:''}>${t==='cad'?`<span class="nm cd${x.id.slice(3)}">${esc(nomDe(myH).split(' ')[0])}</span>`:t==='fx'?(x.id==='fx1'?'🎉':x.id==='fx2'?'🎆':'·'):''}</span><b>${x.n}</b><small>${x.d}</small><span class="pr">${eq?'Équipé ✓':own?'Équiper':x.p+' pts'}</span></button>`}).join('')}</div>`;
+  const nt=NOMTMP||SHOP.nom||[-1,-1];
+  body=`<div class="solde">Tu as <b>${solde()}</b> points à dépenser</div>
+   ${sec('dot','Ton point sur la carte','Ce qui te représente quand tu actives ta position.')}
+   ${sec('cad','Cadre de pseudo','Visible par tout le monde : classement et Gardiens des restos.')}
+   <h3 class="sh">Ton pseudo</h3><p class="mut pnote" style="margin-top:0">Choisis un mot dans chaque liste. Visible par tout le monde. ${NOM_PRIX} points le changement.</p>
+   <div class="pnom">${esc(nt[0]>=0&&nt[1]>=0?`${PSA[nt[0]]} ${PSB[nt[1]]}`:nomDe(myH))}</div>
+   <div class="chips pch">${PSA.map((w,k)=>`<button class="chip" data-na="${k}" aria-pressed="${nt[0]===k}">${w}</button>`).join('')}</div>
+   <div class="chips pch">${PSB.map((w,k)=>`<button class="chip" data-nb="${k}" aria-pressed="${nt[1]===k}">${w}</button>`).join('')}</div>
+   ${NOMTMP&&NOMTMP[0]>=0&&NOMTMP[1]>=0?`<button class="geob" data-nok>Prendre ce pseudo (${NOM_PRIX} points)</button>`:''}
+   ${sec('acc','Couleur de l\'appli','')}
+   ${sec('fx','Effet quand tu donnes une info','')}
+   <p class="mut pnote">Les points dépensés ne font pas baisser ton niveau.</p>`}
+ else{const l=gs.map(([id,p])=>{const r=byId[id];return r?`<button class="row" data-pr="${id}">${badge(r.b,0,'s')}<span class="t"><b>👑 ${esc(BR[r.b].n)} ${esc(r.name)}</b><small>${esc(r.city)} · ${p} points ici ce mois-ci</small></span></button>`:''}).join('');
+  body=`<div class="gexp"><div class="gcr">👑</div><p><b>Chaque fast-food a son Gardien.</b> C'est la personne qui a donné le plus d'infos fiables sur ce resto ce mois-ci. Son pseudo et son cadre s'affichent sur la fiche du resto, pour tout le monde.</p>
+   <p class="mut">Les infos données sur place et les attentes chronométrées comptent le plus. Les infos données de loin ne comptent pas. Les couronnes sont recalculées toutes les heures et remises en jeu chaque mois.</p></div>
+   <h3 class="sh">Tes couronnes${gs.length?` (${gs.length})`:''}</h3>${l||'<p class="note">Pas encore de couronne. Va dans ton fast-food préféré et donne des infos sur place : tu peux devenir son Gardien dès ce mois-ci.</p>'}`}
+ el.querySelector('.pfs').innerHTML=card+tabs+`<div class="pbody">${body}</div>`}
+function profClick(e){const t=e.target;if(t.id==='prof'||t.closest('[data-pclose]'))return profClose();
+ const tb=t.closest('[data-ptab]');if(tb){PTAB=tb.dataset.ptab;return profRender()}
+ const pr=t.closest('[data-pr]');if(pr&&byId[pr.dataset.pr]){profClose();return openR(byId[pr.dataset.pr],true)}
+ const na=t.closest('[data-na]'),nb=t.closest('[data-nb]');if(na||nb){const c=NOMTMP||[...(SHOP.nom||[-1,-1])];if(na)c[0]=+na.dataset.na;if(nb)c[1]=+nb.dataset.nb;NOMTMP=c;return profRender()}
+ if(t.closest('[data-nok]')){if(solde()<NOM_PRIX){profShake();return toast(`Il te manque ${NOM_PRIX-solde()} points.`)}SHOP.s+=NOM_PRIX;SHOP.nom=NOMTMP;NOMTMP=null;shopSave();profSync();fxPlay('fx1');toast('Nouveau pseudo ! Les autres le verront dans l\'heure.');return profRender()}
+ const b=t.closest('[data-buy]');if(!b)return;const x=ITEM[b.dataset.buy];if(!x)return;
+ if(!SHOP.own.includes(x.id)){if(solde()<x.p){b.classList.add('nope');setTimeout(()=>b.classList.remove('nope'),500);return toast(`Il te manque ${x.p-solde()} points. Donne des infos pour en gagner.`)}
+  SHOP.s+=x.p;SHOP.own.push(x.id);toast(`${x.n} débloqué !`);fxPlay(x.t==='fx'?x.id:'fx1')}
+ SHOP.eq[x.t]=x.id;shopSave();shopApply();if(x.t==='cad')profSync();profRender()}
+function profShake(){const s=document.querySelector('#prof .pfs');if(s){s.classList.add('nope');setTimeout(()=>s.classList.remove('nope'),500)}}
+shopApply();
 /* aide */
 const modal=v=>{$('modal').style.display=v?'flex':'none';if(v)$('okBtn').focus()};
 $('helpBtn').addEventListener('click',()=>modal(true));
@@ -927,7 +1200,7 @@ if(!store.get('foodloc-onboard'))modal(true);
 
 /* chargement */
 Promise.all([load('restos.json'),load('deps.json'),load('feat.json'),load('calendrier.json',1),load('appris.json',1),load('classement.json',1)]).then(async([rs,dp,ft,cal,ap,rk])=>{
- setCalendar(cal);LEARNED=ap;RANK=rk;
+ setCalendar(cal);LEARNED=ap;RANK=rk;setTimeout(bdgCheck,1500);
  for(const f of dp.features)DEP[f.properties.code]={n:f.properties.nom};
  R=rs.map(([b,lat,lon,name,addr,cp,city,d,oh,dr,ref],i)=>({id:b+ref,b,lat,lon,name,addr,cp,city,d,oh,dr,cur:0,f:ft[i]||[0,0,0,0,0,0,0,0,0,0,0,0],z:ZONE[d]||null,st:{cur:0,src:'none'}}));
  const tw={},dc={};

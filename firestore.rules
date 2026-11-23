@@ -46,5 +46,51 @@ service cloud.firestore {
         && request.resource.data.ts > request.time.toMillis() - 300000
         && request.resource.data.ts < request.time.toMillis() + 300000;
     }
+    // onglet Restaurants : temps pour être servi (k = 'svc') ou table dispo / attente / complet (k = 'tab')
+    match /rreports/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['v', 'r', 't', 'k', 's', 'm', 'via', 'sv', 'ts', 'u'])
+        && request.resource.data.u == request.auth.uid
+        && request.resource.data.r is string && request.resource.data.r.size() < 40
+        && request.resource.data.t is string && request.resource.data.t.size() < 20
+        && request.resource.data.k in ['svc', 'tab']
+        && request.resource.data.s in ['', 'direct', 'attente', 'complet']
+        && request.resource.data.m is int && request.resource.data.m >= 0 && request.resource.data.m <= 180
+        && request.resource.data.via in ['place', 'appel']
+        && request.resource.data.sv in ['', 'midi', 'soir']
+        && request.resource.data.ts is number
+        && request.resource.data.ts > request.time.toMillis() - 300000
+        && request.resource.data.ts < request.time.toMillis() + 300000;
+      allow update: if false;
+      // ménage : seules les infos de plus de 60 jours peuvent être supprimées
+      allow delete: if request.auth != null
+        && resource.data.ts < request.time.toMillis() - 5184000000;
+    }
+    // profil public choisi dans la boutique : 2 numéros de mots (pseudo) et un numéro de cadre, rien d'autre
+    match /profils/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['a', 'n', 'c', 'ts'])
+        && request.resource.data.a is int && request.resource.data.a >= -1 && request.resource.data.a <= 11
+        && request.resource.data.n is int && request.resource.data.n >= -1 && request.resource.data.n <= 11
+        && request.resource.data.c is int && request.resource.data.c >= 0 && request.resource.data.c <= 5
+        && request.resource.data.ts is number;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    // compteur de visites : un total par jour (a = accueil, c = carte, n = nouveaux). Chaque visite ne peut ajouter que 1.
+    match /stats/{jour} {
+      allow read: if true;
+      allow create: if jour.matches('^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]$')
+        && request.resource.data.keys().hasOnly(['a', 'c', 'n'])
+        && request.resource.data.get('a', 0) in [0, 1]
+        && request.resource.data.get('c', 0) in [0, 1]
+        && request.resource.data.get('n', 0) in [0, 1];
+      allow update: if request.resource.data.keys().hasOnly(['a', 'c', 'n'])
+        && request.resource.data.get('a', 0) - resource.data.get('a', 0) in [0, 1]
+        && request.resource.data.get('c', 0) - resource.data.get('c', 0) in [0, 1]
+        && request.resource.data.get('n', 0) - resource.data.get('n', 0) in [0, 1];
+      allow delete: if false;
+    }
   }
 }
