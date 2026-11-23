@@ -2,6 +2,8 @@
 // 1. Apprentissage : lit les nouvelles infos données par les gens dans la base Firebase, les compare à ce que le modèle
 //    prévoyait à ce moment-là, et met à jour data/appris.json (l'écart moyen de chaque resto).
 // 2. Classement : ajoute les points du mois dans data/classement.json (pseudos tirés au hasard, aucun identifiant publié).
+//    Gardiens : pour chaque resto, la personne qui a donné le plus d'infos fiables ce mois-ci (les infos données de loin ne comptent pas).
+//    Pseudos choisis dans la boutique : lus dans la collection « profils » (2 numéros de mots + un numéro de cadre).
 // 3. Ménage (une fois par nuit) : supprime de la base les infos de plus de 60 jours.
 // Chaque info n'est lue qu'une fois, donc ça ne consomme presque rien du quota gratuit.
 process.env.TZ = 'Europe/Paris';            // le modèle raisonne en heure française
@@ -86,6 +88,7 @@ async function apprendre() {
         dernier[cleU] = x.ts;
         const h = crypto.createHash('sha256').update(x.u).digest('hex').slice(0, 10);   // l'identifiant n'est jamais publié, seulement cette empreinte
         rang.pts[h] = (rang.pts[h] || 0) + M.ptsOf(info);
+        if (info.g !== -1) { const gp = rang.gp || (rang.gp = {}), pr = gp[x.r] || (gp[x.r] = {}); pr[h] = (pr[h] || 0) + M.ptsOf(info); }
       }
     }
   }
@@ -93,8 +96,39 @@ async function apprendre() {
   appris.maj = jusque;
   ecrire('data/appris.json', appris);
   rang.maj = jusque;
+  gardiens(rang);
   ecrire('data/classement.json', rang);
   console.log(`${prises} info(s) apprise(s), ${Object.keys(appris.r).length} resto(s) ajusté(s), ${Object.keys(rang.pts).length} personne(s) au classement.`);
+}
+
+// Gardien d'un resto : le plus de points fiables ce mois-ci, au moins 15 (une info sur place)
+function gardiens(rang) {
+  rang.g = {};
+  for (const [id, pr] of Object.entries(rang.gp || {})) {
+    const top = Object.entries(pr).sort((a, b) => b[1] - a[1])[0];
+    if (top && top[1] >= 15) rang.g[id] = [top[0], Math.round(top[1])];
+  }
+}
+
+// pseudos et cadres choisis dans la boutique (collection « profils », lisible par tous, rien de personnel dedans)
+async function noms() {
+  let rang; try { rang = lire('data/classement.json'); } catch (e) { return; }
+  const n = {}; let jeton = '', pages = 0;
+  do {
+    const r = await fetch(`${DOCS}/profils?pageSize=300${apiKey ? '&key=' + apiKey : ''}${jeton ? '&pageToken=' + encodeURIComponent(jeton) : ''}`);
+    if (!r.ok) { console.log(`Pseudos sautés : Firebase a répondu ${r.status}.`); return; }
+    const j = await r.json();
+    for (const d of j.documents || []) {
+      const f = d.fields || {}, a = val(f.a), b = val(f.n), c = val(f.c), id = d.name.split('/').pop();
+      if (![a, b, c].every(Number.isInteger) || a < -1 || a > 11 || b < -1 || b > 11 || c < 0 || c > 5) continue;
+      n[crypto.createHash('sha256').update(id).digest('hex').slice(0, 10)] = [a, b, c];
+    }
+    jeton = j.nextPageToken || ''; pages++;
+  } while (jeton && pages < 20);
+  if (JSON.stringify(n) === JSON.stringify(rang.n || {})) return;
+  rang.n = n;
+  ecrire('data/classement.json', rang);
+  console.log(`${Object.keys(n).length} pseudo(s) choisi(s) dans la boutique.`);
 }
 
 // suppression des infos de plus de 60 jours (la base n'accepte les suppressions que d'un visiteur connecté, même anonyme)
@@ -110,4 +144,5 @@ async function menage() {
 }
 
 await apprendre();
+try { await noms(); } catch (e) { console.log('Pseudos sautés :', e.message); }
 if (process.env.FOODLOC_MENAGE === '1' || new Date().getHours() === 4) await menage();
