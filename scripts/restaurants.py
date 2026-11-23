@@ -11,8 +11,10 @@ Une ligne = [lat, lon, nom, type, horaires, réservation, options, adresse, code
   réservation : 0 inconnu, 1 possible, 2 conseillée, 3 obligatoire, 4 pas de réservation
   options (addition) : 1 terrasse, 2 à emporter, 4 resto connu (Wikipédia, Michelin…), 8 accessible en fauteuil
 
-Usage : python3 scripts/restaurants.py              (télécharge depuis Overpass)
-        python3 scripts/restaurants.py fichier.json  (fichier Overpass déjà téléchargé)
+Usage : python3 scripts/restaurants.py fichier.geojsonseq [autres…]  (extraits Geofabrik filtrés par osmium,
+                                                                    c'est ce que fait la mise à jour chaque semaine)
+        python3 scripts/restaurants.py fichier.json   (fichier Overpass déjà téléchargé)
+        python3 scripts/restaurants.py                (télécharge depuis Overpass, souvent saturé pour toute la France)
 """
 import json, math, os, sys, time, unicodedata, urllib.request, urllib.parse, datetime, glob
 
@@ -115,12 +117,51 @@ def telecharger():
         time.sleep(60)
     raise SystemExit('Overpass ne répond pas : on garde l\'ancienne liste.')
 
+def centre(g):
+    """Centre approximatif d'une géométrie GeoJSON (point, ou moyenne du contour d'un bâtiment)."""
+    t, c = g['type'], g['coordinates']
+    if t == 'Point':
+        return c[1], c[0]
+    ring = c[0] if t == 'Polygon' else c[0][0]
+    pts = ring[:-1] if len(ring) > 1 else ring
+    return sum(p[1] for p in pts) / len(pts), sum(p[0] for p in pts) / len(pts)
+
+def lire_geojsonseq(fn):
+    """Sortie de « osmium export -f geojsonseq --attributes=type,id » : on la remet au format Overpass."""
+    els = []
+    with open(fn, encoding='utf-8') as f:
+        for brut in f:
+            brut = brut.strip().lstrip('\x1e')
+            if not brut:
+                continue
+            ft = json.loads(brut)
+            pr = ft.get('properties') or {}
+            typ, oid = pr.pop('@type', None), pr.pop('@id', None)
+            if not typ or oid is None or not ft.get('geometry'):
+                continue
+            lat, lon = centre(ft['geometry'])
+            e = {'type': typ, 'id': int(oid), 'tags': pr}
+            if typ == 'node':
+                e['lat'], e['lon'] = lat, lon
+            else:
+                e['center'] = {'lat': lat, 'lon': lon}
+            els.append(e)
+    return els
+
 def main():
     if len(sys.argv) > 1:
-        els = json.load(open(sys.argv[1]))
-        els = els.get('elements', els) if isinstance(els, dict) else els
+        els = []
+        for fn in sys.argv[1:]:
+            if fn.endswith('.geojsonseq'):
+                els += lire_geojsonseq(fn)
+            else:
+                d = json.load(open(fn))
+                els += d.get('elements', d) if isinstance(d, dict) else d
     else:
         els = telecharger()
+    MINI = int(os.environ.get('MINI', 0))
+    if len(els) < MINI:
+        raise SystemExit(f'Seulement {len(els)} restos lus (moins de {MINI}) : on garde l\'ancienne liste.')
     cases, vus = {}, set()
     for e in els:
         l = ligne(e)
