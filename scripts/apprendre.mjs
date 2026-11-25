@@ -75,7 +75,7 @@ async function apprendre() {
   for (const x of nouvelles) {
     const r = parId[x.r];
     if (!r || ![1, 2, 3].includes(x.l) || typeof x.ts !== 'number') continue;
-    const info = { l: x.l, tg: Array.isArray(x.tg) ? x.tg.filter(t => typeof t === 'string') : [], g: x.g, w: x.w > 0 && x.w <= 90 ? x.w : 0, q: [1, 2, 3, 4].includes(x.q) ? x.q : 0, c: x.c > 0 && x.c <= 300 ? x.c : 0 };
+    const info = { l: x.l, tg: Array.isArray(x.tg) ? x.tg.filter(t => typeof t === 'string') : [], g: x.g, w: x.w > 0 && x.w <= 90 ? x.w : 0, q: [1, 2, 3, 4].includes(x.q) ? x.q : 0, c: x.c > 0 && x.c <= 300 ? x.c : 0, d: [1, 2, 3, 4, 5].includes(x.d) ? x.d : 0 };
     const poids = M.wG(info), ecart = M.bRep(info) - M.auto(r, new Date(x.ts));
     const a = appris.r[x.r] || (appris.r[x.r] = [0, 0, 0, 0]);      // [poids total, somme des écarts, nb de comptages, somme des capacités]
     a[0] += poids; a[1] += poids * ecart;
