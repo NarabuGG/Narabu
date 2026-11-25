@@ -187,6 +187,7 @@ footer a{color:var(--mut)}
 .rv.vu{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.mas{animation:none}.rv{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
 </style>
+<link rel="stylesheet" href="anim.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -377,5 +378,7 @@ footer a{color:var(--mut)}
  if('serviceWorker' in navigator&&location.protocol==='https:'&&!/claude/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.1/dist/gsap.min.js" defer></script>
+<script src="anim.js" defer></script>
 </body>
 </html>

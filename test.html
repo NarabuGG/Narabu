@@ -271,6 +271,7 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 #fxc{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:2700;display:none}
 @media (prefers-reduced-motion:reduce){.me[data-sk],.sp::before,#cel{animation:none!important;transition:none!important}}
 </style>
+<link rel="stylesheet" href="anim.css">
 </head>
 <body>
 <div class="top">
@@ -645,8 +646,8 @@ function setPanel(st){const p=$('panel');p.classList.remove('drag');p.style.heig
   if(i===i0&&Math.abs(dy)>30)i=Math.max(0,Math.min(2,i0+(dy>0?-1:1)));setPanel(PS[i])};
  h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end)})();
 function openR(r,fly){if(sel!==r)probOpen=false;setSel(r);setHash('#r-'+r.id);zone='salle';document.body.classList.add('det');renderDetail();$('panel').scrollTop=0;setPanel('big');
- const mob=innerWidth<=820;if(fly||mob)map.flyTo({center:[r.lon,r.lat],zoom:fly?Math.max(map.getZoom(),15):map.getZoom(),offset:[0,mob?-map.getContainer().clientHeight*.3:0],duration:700})}
-function back(){if(TAB==='rs')return rsBack();setSel(null);setHash('');setPanel('mid');document.body.classList.remove('det');renderHome()}
+ const mob=innerWidth<=820;if(fly||mob)map.flyTo({center:[r.lon,r.lat],zoom:fly?Math.max(map.getZoom(),15):map.getZoom(),offset:[0,mob?-map.getContainer().clientHeight*.3:0],duration:700});window.NX&&NX('fiche')}
+function back(){if(TAB==='rs')return rsBack();setSel(null);setHash('');setPanel('mid');document.body.classList.remove('det');renderHome();window.NX&&NX('liste')}
 $('panel').addEventListener('click',e=>{const t=e.target;
  if(t.closest('#handle')){if(!dragged)setPanel(PS[($('panel').classList.contains('reduit')?0:$('panel').classList.contains('big')?2:1)+1]||'mini');dragged=false;return}
  if($('panel').classList.contains('reduit'))return setPanel('mid');
@@ -721,7 +722,7 @@ let busy=false;
 /* les données partagées ne sont pas fiables par défaut : on ne garde que les champs attendus */
 const clean=(x,id)=>x&&typeof x.r==='string'&&byId[x.r]&&[1,2,3].includes(x.l)&&typeof x.ts==='number'&&x.ts<=Date.now()+60e3?{r:x.r,l:x.l,z:x.z==='drive'?'drive':'salle',ts:x.ts,u:typeof x.u==='string'?x.u:'',tg:Array.isArray(x.tg)?x.tg.filter(k=>typeof k==='string'&&TAGS[k]).slice(0,6):[],p:[1,2,3,4,5].includes(x.p)?x.p:0,g:[-1,1].includes(x.g)?x.g:0,w:x.w>0&&x.w<=90?Math.round(x.w):0,q:[1,2,3,4].includes(x.q)?x.q:0,c:Number.isInteger(x.c)&&x.c>0&&x.c<=300?x.c:0,_id:id}:null;
 async function send(l,r=sel,extra){if(!r||busy)return;busy=true;const doc={v:4,r:r.id,l,z:r===sel?zone:'salle',ts:Date.now(),u:uid||'moi',tg:[],p:0,g:geoFlag(r),w:0,q:0,c:0,...extra};
- const flash=!reports.some(x=>x.r===r.id&&Date.now()-x.ts<WIN);try{if(mode==='db'){await db.collection('reports').add(doc);prune()}else{reports.push(clean(doc));saveLocal()}addPts(ptsOf(doc));moiLog({t:'ff',r:r.id,c:r.city,ts:doc.ts,g:doc.g,w:doc.w,f:flash?1:0});toast(`Merci ! +${ptsOf(doc)} points. ${BR[r.b].n} ${r.name} : ${LV[l].n}${doc.w?` (attente mesurée : ${doc.w} min)`:''}`)}
+ const flash=!reports.some(x=>x.r===r.id&&Date.now()-x.ts<WIN);try{if(mode==='db'){await db.collection('reports').add(doc);prune()}else{reports.push(clean(doc));saveLocal()}addPts(ptsOf(doc));moiLog({t:'ff',r:r.id,c:r.city,ts:doc.ts,g:doc.g,w:doc.w,f:flash?1:0});toast(`Merci ! +${ptsOf(doc)} points. ${BR[r.b].n} ${r.name} : ${LV[l].n}${doc.w?` (attente mesurée : ${doc.w} min)`:''}`);window.NX&&NX('signal',{c:LV[l].c})}
  catch(e){if(e&&e.code==='invalid_argument'){mode='ro'}toast(e&&e.code==='quota_exceeded'?'Base pleine, info non envoyée.':'Info non envoyée, réessaie.')}
  busy=false;refresh()}
 /* détail facultatif ajouté à sa propre info (tags, nombre de personnes) */
@@ -748,7 +749,7 @@ addEventListener('hashchange',route);
 /* ===== points, niveaux, classement du mois ===== */
 const mois=()=>ymd(new Date()).slice(0,7);
 let PTS={m:mois(),p:0,t:0};try{const s=JSON.parse(store.get('foodloc-pts')||'null');if(s&&typeof s.t==='number')PTS={m:s.m,p:s.m===mois()?s.p:0,t:s.t}}catch(e){}
-function addPts(n){if(!n)return;if(PTS.m!==mois())PTS={m:mois(),p:0,t:PTS.t};PTS.p=Math.max(0,PTS.p+n);PTS.t=Math.max(0,PTS.t+n);store.set('foodloc-pts',JSON.stringify(PTS))}
+function addPts(n){if(!n)return;const nx0=PTS.t;if(PTS.m!==mois())PTS={m:mois(),p:0,t:PTS.t};PTS.p=Math.max(0,PTS.p+n);PTS.t=Math.max(0,PTS.t+n);store.set('foodloc-pts',JSON.stringify(PTS));window.NX&&NX('points',{a:nx0,b:PTS.t})}
 let RANK=null,myH=null;
 async function hashUid(){try{if(!uid||uid==='moi'||!crypto.subtle)return;const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(uid));myH=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,10);if(view==='home')renderHome()}catch(e){}}
 function ptsBox(){const i=NIVEAUX.findLastIndex(n=>PTS.t>=n[0]),nx=NIVEAUX[i+1];
@@ -923,7 +924,7 @@ async function rsInit(){if(!RS_ON||!map)return;try{await rsPins()}catch(e){}if(!
  rsLayers();rsBind();rsShow();if(TAB==='rs'){rsLoad();if(!rsSel)rsHome()}rsConnect()}
 function setTab(t){if(!RS_ON||t===TAB)return;TAB=t;store.set('narabu-tab',t);if(t==='ff'){rsSetSel(null);PAUSE=null}else{setSel(null)}
  document.body.classList.remove('det');setHash('');filters();rsShow();if(t==='rs'){rsLoad();rsHome()}else renderHome();
- if(map&&t==='rs'&&map.getZoom()<10.5)toast('Zoome sur une ville ou cherche-la pour voir ses restaurants')}
+ if(map&&t==='rs'&&map.getZoom()<10.5)toast('Zoome sur une ville ou cherche-la pour voir ses restaurants');window.NX&&NX('onglet',{t})}
 
 /* infos des gens (Firestore, collection rreports) */
 function rsClean(x){return x&&typeof x.r==='string'&&['svc','tab'].includes(x.k)&&typeof x.ts==='number'&&x.ts<=Date.now()+60e3?{r:x.r,t:x.t,k:x.k,s:x.s||'',m:+x.m||0,via:x.via||'place',sv:x.sv||'',ts:x.ts,u:x.u}:null}
@@ -941,7 +942,7 @@ async function rsSend(k,s,m,via,sv){const r=rsSel;if(!r||rsBusySend)return;
  rsBusySend=true;const doc={v:1,r:r.id,t:r.tile,k,s:s||'',m:Math.round(m||0),via:via||'place',sv:sv||'',ts:Date.now(),u:uid||'moi'};
  try{if(db&&!rsLocal)await db.collection('rreports').add(doc);else{rsRep.push(doc);store.set('narabu-rr',JSON.stringify(rsRep.filter(x=>Date.now()-x.ts<60*86400e3)))}
   if(k==='svc'){const a=rsSvc.get(r.id)||[];a.push(doc.m);rsSvc.set(r.id,a)}else if(rsLocal===false&&!rsRep.includes(doc))rsRep.push(doc);
-  last[key]=Date.now();store.set('narabu-rlast',JSON.stringify(last));addPts(k==='svc'?5:10);moiLog({t:'rs',r:r.id,c:r.city||'',ts:doc.ts,g:doc.via==='place'?1:0,w:0});toast(k==='svc'?'Merci ! +5 points. Ça aide les gens pressés.':'Merci ! +10 points. Ton info est visible par tout le monde.')}
+  last[key]=Date.now();store.set('narabu-rlast',JSON.stringify(last));addPts(k==='svc'?5:10);moiLog({t:'rs',r:r.id,c:r.city||'',ts:doc.ts,g:doc.via==='place'?1:0,w:0});toast(k==='svc'?'Merci ! +5 points. Ça aide les gens pressés.':'Merci ! +10 points. Ton info est visible par tout le monde.');window.NX&&NX('signal',{svc:k==='svc'})}
  catch(e){toast('Envoi impossible pour le moment. Réessaie dans un instant.')}
  rsBusySend=false;rsBuild();rsDetail()}
 
@@ -995,8 +996,8 @@ function rsSetSel(r){rsSel=r;if(!map||!map.getLayer('rsselc'))return;const id=r?
 let rsGlowOn=false;
 function rsGlow(t){if(!rsSel||!map||!map.getLayer('rsselc')){rsGlowOn=false;return}const k=calme?.5:(Math.sin(t/260)+1)/2;try{map.setPaintProperty('rsselc','circle-radius',26+k*16);map.setPaintProperty('rsselc','circle-opacity',1-k*.6)}catch(e){}if(calme){rsGlowOn=false;return}requestAnimationFrame(rsGlow)}
 function rsOpenR(r,fly){if(!r)return;if(rsSel!==r)rsCallOpen=false;rsSetSel(r);setHash('#rs-'+r.id.slice(2)+'-'+r.tile);document.body.classList.add('det');rsDetail();$('panel').scrollTop=0;setPanel('big');
- const mob=innerWidth<=820;if(fly||mob)map.flyTo({center:[r.lon,r.lat],zoom:fly?Math.max(map.getZoom(),15.5):map.getZoom(),offset:[0,mob?-map.getContainer().clientHeight*.3:0],duration:700})}
-function rsBack(){rsSetSel(null);setHash('');setPanel('mid');document.body.classList.remove('det');rsHome()}
+ const mob=innerWidth<=820;if(fly||mob)map.flyTo({center:[r.lon,r.lat],zoom:fly?Math.max(map.getZoom(),15.5):map.getZoom(),offset:[0,mob?-map.getContainer().clientHeight*.3:0],duration:700});window.NX&&NX('fiche')}
+function rsBack(){rsSetSel(null);setHash('');setPanel('mid');document.body.classList.remove('det');rsHome();window.NX&&NX('liste')}
 function rsClick(t){const a=t.closest('[data-rsr]');if(a){rsOpenR(rsById[a.dataset.rsr],true);return true}
  if(t.closest('#backBtn')&&view==='rsdetail'){rsBack();return true}
  const pz=t.closest('[data-pz]');if(pz){const m=+pz.dataset.pz;PAUSE=m&&PAUSE!==m?m:null;if(PAUSE&&!ME&&CFG.position&&!ART&&navigator.geolocation)locate();rsBuild();filters();view==='rsdetail'?rsDetail():rsHome();return true}
@@ -1205,5 +1206,7 @@ Promise.all([load('restos.json'),load('deps.json'),load('feat.json'),load('calen
 renderHome();
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.1/dist/gsap.min.js" defer></script>
+<script src="anim.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,110 @@
+/* =====================================================================
+   Narabu : animations (relief, ressort, ouvertures, moments forts)
+   Ce fichier ne change que l'apparence. Il marche avec anim.js et GSAP.
+   Regle : on n'anime que transform et opacity.
+   ===================================================================== */
+
+/* ---------- 1. Relief au survol : ombre et reflet (souris uniquement) ---------- */
+/* anim.js incline l'element ; ici on prepare deux calques :
+   ::before = ombre portee qui glisse, ::after = reflet lumineux qui suit la souris. */
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+  .lv,.row,.mnb,.gard,.geoc,.bdg,.sit,.go a,      /* carte */
+  .et,.box,.chif>div,.af                          /* accueil */
+  {position:relative;isolation:isolate}
+
+  .lv::before,.row::before,.mnb::before,.gard::before,.geoc::before,.bdg::before,.sit::before,.go a::before,
+  .et::before,.box::before,.chif>div::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;
+    box-shadow:0 22px 34px -20px rgba(0,0,0,.34);
+    opacity:var(--nx-on,0);transform:translate(var(--nx-sx,0px),var(--nx-sy,0px));
+    transition:opacity .3s ease}
+
+  .lv::after,.row::after,.mnb::after,.gard::after,.geoc::after,.bdg::after,.sit::after,.go a::after,
+  .et::after,.box::after,.chif>div::after,.af::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+    background:radial-gradient(circle at var(--nx-gx,50%) var(--nx-gy,50%),rgba(255,255,255,.30),rgba(255,255,255,0) 58%);
+    opacity:var(--nx-on,0);transition:opacity .3s ease}
+  /* sur fond clair le reflet blanc se voit peu : on le teinte legerement */
+  :root:not([data-theme=dark]) .row::after,:root:not([data-theme=dark]) .bdg::after,:root:not([data-theme=dark]) .sit::after{
+    background:radial-gradient(circle at var(--nx-gx,50%) var(--nx-gy,50%),rgba(255,197,61,.16),rgba(255,197,61,0) 60%)}
+  .row{border-radius:10px}
+}
+
+/* Les elements pilotes par GSAP ne doivent pas avoir de transition CSS sur transform
+   (sinon les deux se battent et ca saccade). Les couleurs gardent leur transition. */
+.nx-g{transition-property:background-color,border-color,color,box-shadow,opacity!important}
+
+/* ---------- 2. Onglets Fast-food / Restaurants : pastille qui glisse ---------- */
+.tabs{position:relative}
+.tabs button{position:relative;z-index:1}
+.tabs .nx-pill{position:absolute;z-index:0;border-radius:15px;background:var(--red);pointer-events:none;transform-origin:0 50%;will-change:transform}
+.tabs button.nx-pilling{background:transparent!important}
+
+/* ---------- 3. Calques des moments forts ---------- */
+.nx-fx{position:fixed;left:0;top:0;pointer-events:none;z-index:2450;will-change:transform,opacity}
+.nx-ripple{width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%}
+.nx-dot{width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:2px}
+.nx-dot.r{border-radius:50%}
+.st,.lvl,.chips{position:relative}
+.pts b:first-child{display:inline-block}
+.nx-ok{position:absolute;right:12px;top:50%;width:34px;height:34px;margin-top:-17px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.chips .nx-ok svg{width:15px;height:15px}
+.lvl .nx-ok,.chips .nx-ok{z-index:2}
+.nx-ok svg{width:20px;height:20px;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- 4. Ouvertures : bulle "Tu es au... ?", recherche, aide ---------- */
+@media (prefers-reduced-motion:no-preference){
+  #near{animation:nx-drop .5s cubic-bezier(.34,1.45,.64,1) both;transform-origin:50% 0}
+  #res{animation:nx-unfold .24s cubic-bezier(.2,0,0,1) both;transform-origin:50% 0}
+  #modal{animation:nx-fade .25s ease-out both}
+  #modal .box{animation:nx-pop3d .5s cubic-bezier(.2,.9,.3,1.08) both}
+}
+@keyframes nx-drop{from{opacity:0;transform:translateY(-18px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes nx-unfold{from{opacity:0;transform:translateY(-6px) scaleY(.94)}to{opacity:1;transform:none}}
+@keyframes nx-fade{from{opacity:0}to{opacity:1}}
+@keyframes nx-pop3d{from{opacity:0;transform:perspective(900px) translateY(26px) rotateX(14deg) scale(.92)}to{opacity:1;transform:none}}
+
+/* ---------- 5. Feuille "Mon profil" : monte avec de la profondeur ---------- */
+@media (prefers-reduced-motion:no-preference){
+  #prof{perspective:1300px;transition:opacity .2s ease-in}
+  #prof.on{transition:opacity .28s ease-out}
+  #prof .pfs{transform:translateY(60px) rotateX(9deg) scale(.94);transform-origin:50% 100%;opacity:.4;
+    transition:transform .22s cubic-bezier(.4,0,1,1),opacity .2s ease-in}
+  #prof.on .pfs{transform:none;opacity:1;transition:transform .5s cubic-bezier(.22,1.12,.36,1),opacity .25s ease-out}
+}
+@media (min-width:821px) and (prefers-reduced-motion:no-preference){
+  #prof .pfs{transform-origin:50% 50%;transform:translateY(30px) rotateX(10deg) scale(.92)}
+}
+@media (prefers-reduced-motion:no-preference){
+  .nope{animation:nx-shake .38s cubic-bezier(.36,.07,.19,.97)}
+}
+@keyframes nx-shake{20%,80%{transform:translateX(-4px)}35%,65%{transform:translateX(6px)}50%{transform:translateX(-6px)}}
+
+/* ---------- 6. Notification "Merci !" : descend avec un leger rebond ---------- */
+@media (prefers-reduced-motion:no-preference){
+  .toast{transform:translate(-50%,-160px) perspective(600px) rotateX(-40deg);transition:transform .24s cubic-bezier(.4,0,1,1)}
+  .toast.on{transform:translate(-50%,0);transition:transform .5s cubic-bezier(.34,1.5,.64,1)}
+}
+
+/* ---------- 7. Badge obtenu : la notif monte en 3D, le badge tourne sur lui-meme ---------- */
+@media (prefers-reduced-motion:no-preference){
+  #cel{transform:translate(-50%,40px) perspective(800px) rotateX(-35deg) scale(.92);transition:transform .25s cubic-bezier(.4,0,1,1),opacity .2s}
+  #cel.on{transform:translate(-50%,0);transition:transform .55s cubic-bezier(.3,1.35,.6,1),opacity .3s}
+  #cel .celb{position:relative;animation:nx-spin .95s cubic-bezier(.15,.75,.25,1) .12s both}
+  #cel .celb::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid #ffc53d;opacity:0;animation:nx-ring .8s ease-out .75s}
+  #cel .celp{animation:nx-popin .45s cubic-bezier(.34,1.6,.64,1) .8s both}
+}
+@keyframes nx-spin{0%{opacity:0;transform:perspective(320px) rotateY(-540deg) scale(.35)}35%{opacity:1}100%{opacity:1;transform:perspective(320px) rotateY(0) scale(1)}}
+@keyframes nx-ring{0%{opacity:.9;transform:scale(.8)}100%{opacity:0;transform:scale(1.9)}}
+@keyframes nx-popin{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+
+/* ---------- 8. Moins d'animations demande par le telephone : simples fondus ---------- */
+@media (prefers-reduced-motion:reduce){
+  #near,#res,#modal,#modal .box{animation:nx-fade .15s ease-out both}
+  #prof,#prof .pfs,#cel{transition:opacity .15s ease!important}
+  #prof .pfs,#cel,#cel.on{transform:translate(-50%,0)}
+  #prof .pfs{transform:none!important;opacity:0}
+  #prof.on .pfs{opacity:1}
+  .toast{transform:translate(-50%,0)!important;opacity:0;pointer-events:none;transition:opacity .15s!important}
+  .toast.on{opacity:1;pointer-events:auto}
+}
