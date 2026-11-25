@@ -62,6 +62,7 @@ h3{font-size:15px;margin:20px 0 8px;font-weight:800}
 .bm{background:#ffc72c;color:#4a2300}.bb{background:#1f4e9c;color:#fff}.bk{background:#222;color:#fff}.bq{background:#d7192d;color:#fff}.bo{background:#16181d;color:#ffd200}.bf{background:#efe6d2;color:#7a1f1f}.bp{background:#e35205;color:#fff}.bc{background:#5b2a86;color:#fff}.bt{background:#0f8f7e;color:#fff}.bi{background:#2e7d32;color:#fff}
 .f .x{font-weight:800;margin-left:2px;opacity:.7}
 @media (max-width:600px){#res{position:fixed;top:60px;left:8px;right:8px;max-height:72vh}}
+#res .rc{display:flex;flex-wrap:wrap;gap:6px;padding:2px 14px 10px}#res .rc button{width:auto;min-height:36px;padding:6px 12px;border:1px solid var(--line);border-radius:18px;font-size:14px;font-weight:600}#res .rc button[aria-pressed=true]{background:var(--soft);border-color:currentColor}#res .tip{font-size:13px;color:var(--mut);padding:10px 14px 14px;border-top:1px solid var(--line);margin-top:4px}
 #res .act{margin-left:auto;font-size:12px;font-weight:700;color:#1a73e8;white-space:nowrap}
 #res .grp{display:flex;margin-left:-4px}#res .grp .pin{margin-left:-6px;box-shadow:0 0 0 2px var(--bg)}
 .f .pin{width:24px;height:24px;border:0;box-shadow:none}.f .pin svg{width:14px;height:14px}
@@ -487,9 +488,40 @@ const setName=x=>x.cat?CATS[x.cat].n:BR[x.set[0]].n;
 const setIcon=x=>x.set.length===1?badge(x.set[0],0):`<span class="grp">${x.set.slice(0,3).map(k=>badge(k,0)).join('')}</span>`;
 const cntOf=set=>R.filter(r=>set.includes(r.b)).length;
 function townsOf(q){return q.length<2?[]:TOWNS.filter(t=>t.key.startsWith(q)||t.cp.some(c=>c.startsWith(q))).sort((a,b)=>b.k-a.k)}
+/* ===== aide de la barre de recherche : raccourcis, dernières recherches, types, villes, astuces ===== */
+const RTA={fr:['francais','brasserie','bistrot','bistro','traditionnel','gastronomique','grill','fruits de mer','poisson'],it:['pizza','pizzeria','italien','pates'],cr:['crepe','crepes','creperie','galette','galettes'],as:['asiatique','japonais','chinois','sushi','sushis','thai','vietnamien','coreen','ramen','wok'],mo:['monde','indien','libanais','marocain','couscous','turc','grec','mexicain','kebab','tapas','espagnol','portugais','africain','antillais']};
+const rtHits=q=>!RS_ON||q.length<2?[]:RTF.filter(k=>norm(RT[k]).startsWith(q)||RTA[k].some(a=>a.startsWith(q)));
+let RECENT=[];try{RECENT=JSON.parse(store.get('narabu-recent')||'[]');if(!Array.isArray(RECENT))RECENT=[]}catch(e){RECENT=[]}
+function remember(x){let it=null;
+ if(x.t==='town')it={k:'town',n:x.v.n,d:x.v.d};else if(x.t==='dep')it={k:'dep',v:x.v};
+ else if(x.t==='br')it={k:'br',set:x.set,cat:x.cat||null,tn:x.town?x.town.n:null,td:x.town?x.town.d:null};
+ else if(x.t==='r')it={k:'r',id:x.v.id};else if(x.t==='rst')it={k:'rst',v:x.v};
+ if(!it)return;const key=JSON.stringify(it);RECENT=[it,...RECENT.filter(y=>JSON.stringify(y)!==key)].slice(0,5);store.set('narabu-recent',JSON.stringify(RECENT))}
+function recentHits(){const out=[];for(const it of RECENT){
+  if(it.k==='town'){const v=TOWNS.find(t=>t.n===it.n&&t.d===it.d);if(v)out.push({hit:{t:'town',v},lab:v.n,sub:DEP[v.d]?.n||v.d})}
+  else if(it.k==='dep'&&DEP[it.v])out.push({hit:{t:'dep',v:it.v},lab:DEP[it.v].n,sub:'Département'});
+  else if(it.k==='br'&&TAB!=='rs'&&Array.isArray(it.set)&&it.set.every(k=>BR[k])){const town=it.tn?TOWNS.find(t=>t.n===it.tn&&t.d===it.td):null,x={t:'br',set:it.set,cat:it.cat,town:town||undefined};out.push({hit:x,lab:setName(x)+(town?' à '+town.n:''),sub:'Enseigne'})}
+  else if(it.k==='r'&&TAB!=='rs'&&byId[it.id]){const r=byId[it.id];out.push({hit:{t:'r',v:r},lab:BR[r.b].n+' '+r.name,sub:r.city})}
+  else if(it.k==='rst'&&TAB==='rs'&&RT[it.v])out.push({hit:{t:'rst',v:it.v},lab:RT[it.v],sub:'Type de resto'})}
+ return out.slice(0,4)}
+function helpBox(){let i=0,h='';hits=[];const add=x=>{hits.push(x);return i++};
+ const ff=TAB!=='rs',geo=CFG.position&&!ART&&navigator.geolocation,acts=[];
+ if(geo)acts.push(['me','📍 Autour de moi']);
+ if(ff)acts.push(['open',(F.open?'✓ ':'')+'Ouvert maintenant']);else acts.push(['rs-pause','⏱ Ma pause déj'],['rs-ok',(RF.ok?'✓ ':'')+'Table dispo']);
+ h+='<div class="h">Raccourcis</div><div class="rc">'+acts.map(([a,t])=>`<button data-i="${add({t:'act',a})}">${t}</button>`).join('')+'</div>';
+ const rec=recentHits();
+ if(rec.length)h+='<div class="h">Tes dernières recherches</div>'+rec.map(x=>`<button data-i="${add(x.hit)}"><span class="mini" style="background:#8d959e">↺</span><span><b>${esc(x.lab)}</b><br><small class="mut">${esc(x.sub||'')}</small></span></button>`).join('');
+ if(ff){h+='<div class="h">Par type</div><div class="rc">'+Object.keys(CATS).map(c=>`<button data-i="${add({t:'br',set:brOf(c),cat:c})}">${CATS[c].n}</button>`).join('')+(RS_ON?`<button data-i="${add({t:'act',a:'tab-rs'})}">Restaurants assis →</button>`:'')+'</div>';
+  h+='<div class="h">Enseignes</div>'+(F.sel?`<button data-i="-1"><span class="mini" style="background:#5f6670">✓</span><span><b>Toutes les enseignes</b></span></button>`:'')
+   +Object.keys(BR).map(k=>{const x={t:'br',set:[k]};return `<button data-i="${add(x)}">${setIcon(x)}<span><b>${esc(setName(x))}</b><br><small class="mut">${cntOf(x.set)} restos</small></span>${F.sel&&F.sel.join()===k?'<span class="act">Affichée</span>':''}</button>`}).join('')}
+ else h+='<div class="h">Quel type de resto ?</div><div class="rc">'+RTF.map(k=>`<button data-i="${add({t:'rst',v:k})}" aria-pressed="${RF.ty===k}">${esc(RT[k])}</button>`).join('')+`<button data-i="${add({t:'act',a:'tab-ff'})}">Fast-foods →</button></div>`;
+ const cities=QUICK.map(n=>bestTown(n)).filter(Boolean);
+ if(cities.length)h+='<div class="h">Villes</div><div class="rc">'+cities.map(t=>`<button data-i="${add({t:'town',v:t})}">${esc(t.n)}</button>`).join('')+'</div>';
+ return h+`<div class="tip"><b>Astuce :</b> ${ff?'tape une enseigne et une ville ensemble (« kfc rennes »), un code postal (35000) ou un département.':'tape un plat (« pizza », « sushi », « crêpe ») ou une ville. Une fois sur place, tape le nom du resto.'}</div>`}
 function search(force){const q=norm($('q').value),box=$('res');$('clr').style.display=q?'block':'none';
  if(q.length<2&&!(force===true||(!q&&document.activeElement===$('q')&&force!==false))){box.style.display='none';return}
  let i=0,h='';hits=[];
+ if(!q){box.innerHTML=helpBox();box.style.display='block';return}
  if(TAB==='rs')return rsSearch(q);
  if(!q){hits=Object.keys(BR).map(k=>({t:'br',set:[k]}));
   h='<div class="h">Choisis une enseigne</div>'+(F.sel?`<button data-i="-1"><span class="mini" style="background:#5f6670">✓</span><span><b>Toutes les enseignes</b></span></button>`:'')
@@ -508,8 +540,15 @@ function search(force){const q=norm($('q').value),box=$('res');$('clr').style.di
  if(!P.set&&(towns.length||deps.length)){h+='<div class="h">Aller à</div>'+towns.map(t=>{hits.push({t:'town',v:t});return `<button data-i="${i++}"><span class="mini" style="background:#5f6670">${t.k}</span><span><b>${esc(t.n)}</b><br><small class="mut">${t.k} resto${t.k>1?'s':''} · ${esc(DEP[t.d]?.n||t.d)}</small></span></button>`}).join('')
   +deps.map(([c,d])=>{hits.push({t:'dep',v:c});return `<button data-i="${i++}"><span class="mini" style="background:#5f6670">${esc(c)}</span><span><b>${esc(d.n)}</b><br><small class="mut">Département</small></span></button>`}).join('')}
  if(rs.length&&(!P.set||P.rest))h+='<div class="h">Restos</div>'+rs.map(r=>{hits.push({t:'r',v:r});return `<button data-i="${i++}">${stBadge(r)}<span><b>${esc(BR[r.b].n)} ${esc(r.name)}</b><br><small class="mut">${esc(r.cp)} ${esc(r.city)}</small></span></button>`}).join('');
- box.innerHTML=h||'<div class="h" style="padding:14px">Rien trouvé. Essaie une ville, un code postal ou une enseigne (Quick, O\'Tacos…).</div>';box.style.display='block'}
+ const rth=P.set?[]:rtHits(tq);
+ if(rth.length)h+='<div class="h">Restaurants assis</div>'+rth.map(k=>{hits.push({t:'act',a:'rst',v:k});return `<button data-i="${i++}"><span class="mini" style="background:#b5651d">${esc(RT[k][0])}</span><span><b>${esc(RT[k])}</b><br><small class="mut">Voir dans l'onglet Restaurants</small></span></button>`}).join('');
+ box.innerHTML=h||`<div class="h" style="padding:14px">Rien trouvé pour « ${esc($('q').value.trim())} ». Essaie une ville (Rennes), un code postal (35000) ou une enseigne (KFC, O'Tacos…).</div>`;box.style.display='block'}
 function pick(x){$('res').style.display='none';$('q').value='';$('clr').style.display='none';$('q').blur();
+ if(x&&x.t==='act'){const a=x.a;
+  if(['me','open','rs-pause','rs-ok'].includes(a)){const b=document.querySelector(`#filters [data-f="${a}"]`);if(b)b.click();return}
+  if(a==='tab-rs'||a==='tab-ff')return setTab(a.slice(4));
+  if(a==='rst'){setTab('rs');x={t:'rst',v:x.v}}else return}
+ if(x)remember(x);
  if(x&&x.t==='rsr')return rsOpenR(x.v,true);
  if(x&&x.t==='rst'){RF.ty=x.v;filters();rsBuild();return rsHome()}
  if(!x){return setSelB(null,true)}
@@ -522,7 +561,7 @@ function pick(x){$('res').style.display='none';$('q').value='';$('clr').style.di
  if(pts.length===1)map.flyTo({center:[pts[0].lon,pts[0].lat],zoom:15});else{const bb=new maplibregl.LngLatBounds();for(const r of pts)bb.extend([r.lon,r.lat]);map.fitBounds(bb,{padding:pad(),maxZoom:14.5})}back()}
 const pad=()=>innerWidth<=820?{top:60,bottom:innerHeight*.42,left:30,right:30}:60;
 $('q').addEventListener('input',()=>search());$('q').addEventListener('focus',()=>search());
-$('q').addEventListener('keydown',e=>{if(e.key==='Enter'&&hits[0])pick(hits[0]);if(e.key==='Escape')$('res').style.display='none'});
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter'&&hits[0]&&$('q').value.trim())pick(hits[0]);if(e.key==='Escape')$('res').style.display='none'});
 $('res').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)pick(+b.dataset.i<0?null:hits[+b.dataset.i])});
 $('clr').addEventListener('click',()=>{$('q').value='';$('q').focus();search()});
 document.addEventListener('click',e=>{if(!e.target.closest('.search')&&!e.target.closest('[data-f=pick]'))$('res').style.display='none'});
@@ -1015,6 +1054,7 @@ function rsFilterClick(k){if(k==='me'){locate();return}
 function rsSearch(q){const box=$('res');let i=0,h='';hits=[];
  if(!q){hits=RTF.map(k=>({t:'rst',v:k}));box.innerHTML='<div class="h">Quel type de resto ?</div>'+hits.map(x=>`<button data-i="${i++}"><span class="mini" style="background:#b5651d">${esc(RT[x.v][0])}</span><span><b>${esc(RT[x.v])}</b></span></button>`).join('');box.style.display='block';return}
  const toks=q.split(' '),towns=townsOf(q).slice(0,4),rs=rsCur.filter(r=>toks.every(w=>r.key.includes(' '+w))).slice(0,20);
+ const th=rtHits(q);if(th.length)h+='<div class="h">Types de resto</div>'+th.map(k=>{hits.push({t:'rst',v:k});return `<button data-i="${i++}"><span class="mini" style="background:#b5651d">${esc(RT[k][0])}</span><span><b>${esc(RT[k])}</b><br><small class="mut">Afficher seulement ce type</small></span></button>`}).join('');
  if(towns.length)h+='<div class="h">Aller à</div>'+towns.map(t=>{hits.push({t:'town',v:t});return `<button data-i="${i++}"><span class="mini" style="background:#5f6670">${esc(t.d)}</span><span><b>${esc(t.n)}</b><br><small class="mut">${esc(DEP[t.d]?.n||t.d)}</small></span></button>`}).join('');
  if(rs.length)h+='<div class="h">Restaurants sur la carte</div>'+rs.map(r=>{hits.push({t:'rsr',v:r});r.st=r.st||rsState(r);return `<button data-i="${i++}">${rsBadge(r.st)}<span><b>${esc(r.name)}</b><br><small class="mut">${esc(r.lab||RT[r.ty])}${r.city?' · '+esc(r.city):''}</small></span></button>`}).join('');
  box.innerHTML=h||'<div class="h" style="padding:14px">Rien trouvé. Tape une ville, puis cherche le resto une fois sur place.</div>';box.style.display='block'}
