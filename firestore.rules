@@ -7,7 +7,7 @@ service cloud.firestore {
       allow read: if true;
       // une info = un resto, un niveau 1 à 3, l'heure du moment, et rien d'autre
       allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['v','r','l','z','ts','u','tg','p','g','w','q','c'])
+        && request.resource.data.keys().hasOnly(['v','r','l','z','ts','u','tg','p','g','w','q','c','d'])
         && request.resource.data.u == request.auth.uid
         && request.resource.data.r is string && request.resource.data.r.size() < 40
         && request.resource.data.l in [1, 2, 3]
@@ -21,15 +21,18 @@ service cloud.firestore {
         // mesures facultatives : attente chronométrée (minutes), file d'attente, personnes comptées
         && request.resource.data.get('w', 0) is int && request.resource.data.get('w', 0) >= 0 && request.resource.data.get('w', 0) <= 90
         && request.resource.data.get('q', 0) in [0, 1, 2, 3, 4]
-        && request.resource.data.get('c', 0) is int && request.resource.data.get('c', 0) >= 0 && request.resource.data.get('c', 0) <= 300;
+        && request.resource.data.get('c', 0) is int && request.resource.data.get('c', 0) >= 0 && request.resource.data.get('c', 0) <= 300
+        // temps pour avoir sa commande, donné après coup : 1 moins de 3 min ... 5 plus de 15 min
+        && request.resource.data.get('d', 0) in [0, 1, 2, 3, 4, 5];
       // on ne peut modifier que les détails de sa propre info
       allow update: if request.auth != null
         && resource.data.u == request.auth.uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tg', 'p', 'q', 'c'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tg', 'p', 'q', 'c', 'd'])
         && request.resource.data.tg is list && request.resource.data.tg.size() <= 6
         && request.resource.data.p in [0, 1, 2, 3, 4, 5]
         && request.resource.data.get('q', 0) in [0, 1, 2, 3, 4]
-        && request.resource.data.get('c', 0) is int && request.resource.data.get('c', 0) >= 0 && request.resource.data.get('c', 0) <= 300;
+        && request.resource.data.get('c', 0) is int && request.resource.data.get('c', 0) >= 0 && request.resource.data.get('c', 0) <= 300
+        && request.resource.data.get('d', 0) in [0, 1, 2, 3, 4, 5];
       // ménage : seules les infos de plus de 60 jours peuvent être supprimées
       allow delete: if request.auth != null
         && resource.data.ts < request.time.toMillis() - 5184000000;

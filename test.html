@@ -374,16 +374,18 @@ function crowd(id,now=Date.now()){const a=repBy.get(id);if(!a)return null;const 
  if(!it.length)return null;
  /* à partir de 3 infos, celle qui contredit nettement les autres compte beaucoup moins */
  if(it.length>=3){const s=[...it].sort((p,q)=>p.b-q.b),tot=s.reduce((t,i)=>t+i.w,0);let acc=0,med=s[0].b;for(const i of s){acc+=i.w;if(acc>=tot/2){med=i.b;break}}for(const i of it)if(Math.abs(i.b-med)>.45)i.w*=.3}
- let sw=0,sb=0,v=0,nm=0,last=0,pw=0,pp=0,mw=null,lc=null;const tg={},fq={salle:[0,0,0],drive:[0,0,0]};
+ let sw=0,sb=0,v=0,nm=0,last=0,pw=0,pp=0,mw=null,lc=null;const tg={},fq={salle:[0,0,0],drive:[0,0,0]},fo={salle:[0,0,0,1],drive:[0,0,0,1]};
  for(const {x,w,b} of it){sw+=w;sb+=w*b;last=Math.max(last,x.ts);if(x.g===1)v++;
   if(x.w>0){nm++;if(!mw||x.ts>mw.ts)mw=x}
   /* nombre de personnes : un comptage sur photo pèse double par rapport à une fourchette */
   const pv=x.c>0?x.c:x.p&&PB[x.p]?PB[x.p][1]:0;if(pv){const k=x.c>0?2:1;pw+=w*k;pp+=w*k*pv}
   /* file d'attente : « 0 à 2 », « 3 à 6 », « 7 à 12 », « 13 ou plus » ramenés au milieu de la tranche */
   if(x.q>0){const f=fq[x.z==='drive'?'drive':'salle'];f[0]+=w;f[1]+=w*QMID[x.q];f[2]++}
+  /* temps pour avoir sa commande : chronométré (compte double) ou donné après coup */
+  if(x.w>0||x.d>0){const f=fo[x.z==='drive'?'drive':'salle'],k=x.w>0?2:1;f[0]+=w*k;f[1]+=w*k*(x.w>0?x.w:DMID[x.d]);f[2]++;if(!(x.w>0))f[3]=0}
   if(x.c>0&&(!lc||x.ts>lc.ts))lc=x;
   for(const k of x.tg||[])tg[k]=(tg[k]||0)+1}
- return{b:sb/sw,w:Math.min(1,sw),sw,n:it.length,v,nm,mw,lc,last,p:pw?pp/pw:null,pw:Math.min(1,pw),tg,q:fq.salle[0]?fq.salle[1]/fq.salle[0]:null,qn:fq.salle[2],qd:fq.drive[0]?fq.drive[1]/fq.drive[0]:null}}
+ return{b:sb/sw,w:Math.min(1,sw),sw,n:it.length,v,nm,mw,lc,last,p:pw?pp/pw:null,pw:Math.min(1,pw),tg,q:fq.salle[0]?fq.salle[1]/fq.salle[0]:null,qn:fq.salle[2],qd:fq.drive[0]?fq.drive[1]/fq.drive[0]:null,o:fo.salle[0]?{m:fo.salle[1]/fo.salle[0],n:fo.salle[2],ex:fo.salle[3]}:null,od:fo.drive[0]?{m:fo.drive[1]/fo.drive[0],n:fo.drive[2],ex:fo.drive[3]}:null}}
 const QMID=[0,1,4.5,9.5,15];
 /* apprentissage, resto par resto : écart moyen entre ce que les gens ont signalé dans le passé et ce que le modèle prévoyait à ce moment-là */
 function learn(){BIAS=new Map();CAPL=new Map();
@@ -409,7 +411,14 @@ function state(r,now=Date.now()){const oh=openNow(r,new Date(now));if(oh&&!oh.o)
  return{cur:lvOf(b),b,est:c.w<.35,src:c.w>.85?'live':'mix',c,p,bi}}
 /* nombre affiché sur la fiche : seulement ce que les gens ont dit ces 90 dernières minutes, jamais l'estimation automatique */
 const qTxt=(q,u)=>(q<2.5?'0 à 2':q<6.5?'3 à 6':q<12.5?'7 à 12':'13 ou plus')+' '+u;
-const crowdTxt=c=>!c?'':c.q!=null?` · ${qTxt(c.q,'personnes devant toi pour commander')}`:c.qd!=null?` · ${qTxt(c.qd,'voitures au drive')}`:c.p!=null?` · ${ppl(c.p)} dans le resto, tables comprises`:'';
+const oTxt=o=>o.ex?`environ ${Math.max(1,Math.round(o.m))} min`:o.m<3?'moins de 3 min':o.m<6?'3 à 6 min':o.m<10?'6 à 10 min':o.m<15?'10 à 15 min':'plus de 15 min';
+const nTxt=n=>`<span class="mut">(d'après ${n} personne${n>1?'s':''})</span>`;
+const crowdLines=c=>{if(!c)return'';const l=[];
+ if(c.q!=null)l.push(`<b>File :</b> ${qTxt(c.q,'personnes devant toi')}`);else if(c.p!=null)l.push(`<b>Dans le resto :</b> ${ppl(c.p)}, tables comprises`);
+ if(c.o)l.push(`<b>Commande :</b> servie en ${oTxt(c.o)} ${nTxt(c.o.n)}`);
+ if(c.qd!=null)l.push(`<b>Drive :</b> ${qTxt(c.qd,'voitures dans la file')}`);
+ if(c.od)l.push(`<b>Drive :</b> commande en ${oTxt(c.od)} ${nTxt(c.od.n)}`);
+ return l.length?`<div class="qlines" style="display:grid;gap:4px;margin:8px 0 2px;font-size:14px">${l.map(x=>`<div>${x}</div>`).join('')}</div>`:''};
 const ppl=p=>p<10?'moins de 10 personnes':p<25?'environ 10 à 25 personnes':p<50?'environ 25 à 50 personnes':p<80?'environ 50 à 80 personnes':'plus de 80 personnes';
 const hh=d=>`${d.getHours()}h${String(d.getMinutes()).padStart(2,'0')}`;
 /* carte : vraies données OpenStreetMap (Protomaps) embarquées dans le site, découpées en paquets régionaux */
@@ -596,7 +605,7 @@ function renderDetail(){const r=sel;if(!r)return;view='detail';const st=r.st=sta
  const onsite=c&&c.v?` (dont ${c.v} confirmée${s(c.v)} sur place)`:'';
  const col=st.cur?LV[st.cur].c:NONE,prof=profile(r),sub=oh&&oh.t.includes('· ')?oh.t.split('· ')[1]:'';
  const mes=st.c&&st.c.mw&&Date.now()-st.c.mw.ts<30*60e3?st.c.mw:null,fia=st.cur?conf(st):'';
- const head=st.closed?['Fermé',sub?sub[0].toUpperCase()+sub.slice(1):'']:!st.cur?['Pas d\'info','Personne n\'a donné d\'info depuis 1 h 30.']:[LV[st.cur].n,(mes?`attente mesurée : ${mes.w} min`:LV[st.cur].w)+crowdTxt(st.c)];
+ const head=st.closed?['Fermé',sub?sub[0].toUpperCase()+sub.slice(1):'']:!st.cur?['Pas d\'info','Personne n\'a donné d\'info depuis 1 h 30.']:[LV[st.cur].n,(mes?`attente mesurée : ${mes.w} min`:LV[st.cur].w)];
  const src=st.src==='auto'?`Estimation automatique${st.bi&&st.bi.n?`, ajustée avec ${st.bi.n} info${s(st.bi.n)} passée${s(st.bi.n)} sur ce resto`:''}.`:st.src==='live'?`D'après ${c.n} info${s(c.n)} des gens${onsite}, la dernière ${ago(c.last)}.`:st.src==='mix'?`Estimation corrigée par ${c.n} info${s(c.n)} des gens${onsite}, la dernière ${ago(c.last)}.`:'';
  const reasons=st.cur&&SRC!=='man'?[...why(r,new Date()),...wxWhy(r)]:[],tg=c&&SRC!=='auto'?Object.entries(c.tg):[],tp=tip(r,st);
  const chrono=CH&&CH.r===r.id?`<p class="note cf" style="margin-top:10px"><b>Chrono en cours : ${chMin()} min.</b><button class="chip" data-ch="fin">J'ai ma commande</button><button class="chip" data-ch="stop">Annuler</button></p>`
@@ -606,6 +615,8 @@ function renderDetail(){const r=sel;if(!r)return;view='detail';const st=r.st=sta
   <div class="chips">${Object.entries(TAGS).filter(([k])=>k!=='dr'||r.dr).map(([k,v])=>`<button class="chip" data-tg="${k}" aria-pressed="${mine.tg.includes(k)}">${v}</button>`).join('')}</div>
   <div style="font-weight:700">Combien de personnes devant toi dans la file ?</div>
   <div class="chips">${['0 à 2','3 à 6','7 à 12','13 ou plus'].map((t,i)=>`<button class="chip" data-q="${i+1}" aria-pressed="${mine.q===i+1}">${t}</button>`).join('')}</div>
+  ${mine.w>0?'':`<div style="font-weight:700">Ta commande a mis combien de temps ?</div>
+  <div class="chips">${['moins de 3 min','3 à 6 min','6 à 10 min','10 à 15 min','plus de 15 min'].map((t,i)=>`<button class="chip" data-d="${i+1}" aria-pressed="${mine.d===i+1}">${t}</button>`).join('')}</div>`}
   <div style="font-weight:700">Combien de personnes à peu près dans le resto ?</div>
   <div class="chips" style="margin-bottom:0">${PB.slice(1).map((p,i)=>`<button class="chip" data-pb="${i+1}" aria-pressed="${mine.p===i+1}">${p[0]}</button>`).join('')}</div>
   ${CFG.photo&&!ART?`<div class="cf" style="margin:10px 0 0"><button class="chip" data-ph>Compter avec une photo</button>${mine.c?`<b>${mine.c} comptée${mine.c>1?'s':''}</b>`:''}<span class="mut" style="font-size:13px">L'IA compte dans ton téléphone : la photo n'est ni envoyée ni gardée.</span></div>`:''}</div>`
@@ -616,6 +627,7 @@ function renderDetail(){const r=sel;if(!r)return;view='detail';const st=r.st=sta
  <div class="mut" style="margin-top:2px">${oh?`<b style="color:${oh.o?'var(--ok)':'var(--bad)'}">${oh.t}</b>`:'Horaires inconnus'}${r.dr?' · Drive':''}</div>
  ${prof.length?`<div>${prof.map(p=>`<span class="tagl">${p}</span>`).join('')}</div>`:''}
  <div class="st${st.est?' est':''}" style="--c:${col};background:${col}"><strong>${head[0]}</strong><small>${head[1]}</small></div>
+ ${st.cur&&!st.closed&&SRC!=='auto'?crowdLines(st.c):''}
  ${src?`<p class="srcl">${src}${fia?` Fiabilité : <b>${fia}</b>.`:''}</p>`:''}${reasons.length?`<p class="srcl">Pourquoi : ${reasons.join(' · ')}.</p>`:''}
  ${tg.length||(c&&c.lc&&SRC!=='auto')?`<div>${c.lc&&SRC!=='auto'?`<span class="tagl w">${c.lc.c} personne${c.lc.c>1?'s':''} comptée${c.lc.c>1?'s':''} sur photo ${ago(c.lc.ts)}</span>`:''}${tg.map(([k,n])=>`<span class="tagl w">${TAGS[k]}${n>1?' ×'+n:''}</span>`).join('')}</div>`:''}
  ${tp?`<p class="tip">${tp} <span class="mut" style="font-weight:400">(estimation)</span></p>`:''}
@@ -667,6 +679,7 @@ $('panel').addEventListener('click',e=>{const t=e.target;
  const tb=t.closest('[data-tg]');if(tb){const k=tb.dataset.tg;return detail(m=>{const a=new Set(m.tg);a.has(k)?a.delete(k):a.add(k);return{tg:[...a]}})}
  const pb=t.closest('[data-pb]');if(pb){const v=+pb.dataset.pb;return detail(m=>({p:m.p===v?0:v,c:0}))}
  const qb=t.closest('[data-q]');if(qb){const v=+qb.dataset.q;return detail(m=>({q:m.q===v?0:v}))}
+ const dq=t.closest('[data-d]');if(dq){const v=+dq.dataset.d;return detail(m=>({d:m.d===v?0:v}))}
  const cb=t.closest('[data-ch]');if(cb)return cb.dataset.ch==='go'?chStart(sel):chStop(cb.dataset.ch==='fin');
  if(t.closest('[data-ph]'))return $('ph').click();
  const th=t.closest('[data-th]');if(th)return setTheme(th.dataset.th);
@@ -726,13 +739,13 @@ setInterval(meteo,30*60e3);
 /* envoi */
 let busy=false;
 /* les données partagées ne sont pas fiables par défaut : on ne garde que les champs attendus */
-const clean=(x,id)=>x&&typeof x.r==='string'&&byId[x.r]&&[1,2,3].includes(x.l)&&typeof x.ts==='number'&&x.ts<=Date.now()+60e3?{r:x.r,l:x.l,z:x.z==='drive'?'drive':'salle',ts:x.ts,u:typeof x.u==='string'?x.u:'',tg:Array.isArray(x.tg)?x.tg.filter(k=>typeof k==='string'&&TAGS[k]).slice(0,6):[],p:[1,2,3,4,5].includes(x.p)?x.p:0,g:[-1,1].includes(x.g)?x.g:0,w:x.w>0&&x.w<=90?Math.round(x.w):0,q:[1,2,3,4].includes(x.q)?x.q:0,c:Number.isInteger(x.c)&&x.c>0&&x.c<=300?x.c:0,_id:id}:null;
+const clean=(x,id)=>x&&typeof x.r==='string'&&byId[x.r]&&[1,2,3].includes(x.l)&&typeof x.ts==='number'&&x.ts<=Date.now()+60e3?{r:x.r,l:x.l,z:x.z==='drive'?'drive':'salle',ts:x.ts,u:typeof x.u==='string'?x.u:'',tg:Array.isArray(x.tg)?x.tg.filter(k=>typeof k==='string'&&TAGS[k]).slice(0,6):[],p:[1,2,3,4,5].includes(x.p)?x.p:0,g:[-1,1].includes(x.g)?x.g:0,w:x.w>0&&x.w<=90?Math.round(x.w):0,q:[1,2,3,4].includes(x.q)?x.q:0,d:[1,2,3,4,5].includes(x.d)?x.d:0,c:Number.isInteger(x.c)&&x.c>0&&x.c<=300?x.c:0,_id:id}:null;
 async function send(l,r=sel,extra){if(!r||busy)return;busy=true;const doc={v:4,r:r.id,l,z:r===sel?zone:'salle',ts:Date.now(),u:uid||'moi',tg:[],p:0,g:geoFlag(r),w:0,q:0,c:0,...extra};
  const flash=!reports.some(x=>x.r===r.id&&Date.now()-x.ts<WIN);try{if(mode==='db'){await db.collection('reports').add(doc);prune()}else{reports.push(clean(doc));saveLocal()}addPts(ptsOf(doc));moiLog({t:'ff',r:r.id,c:r.city,ts:doc.ts,g:doc.g,w:doc.w,f:flash?1:0});toast(`Merci ! +${ptsOf(doc)} points. ${BR[r.b].n} ${r.name} : ${LV[l].n}${doc.w?` (attente mesurée : ${doc.w} min)`:''}`);window.NX&&NX('signal',{c:LV[l].c})}
  catch(e){if(e&&e.code==='invalid_argument'){mode='ro'}toast(e&&e.code==='quota_exceeded'?'Base pleine, info non envoyée.':'Info non envoyée, réessaie.')}
  busy=false;refresh()}
 /* détail facultatif ajouté à sa propre info (tags, nombre de personnes) */
-async function detail(fn){const r=sel,m=r&&mineOf(r);if(!m||busy)return;busy=true;const patch=fn(m),old={tg:m.tg,p:m.p,q:m.q,c:m.c},p0=ptsOf(m);Object.assign(m,patch);addPts(ptsOf(m)-p0);
+async function detail(fn){const r=sel,m=r&&mineOf(r);if(!m||busy)return;busy=true;const patch=fn(m),old={tg:m.tg,p:m.p,q:m.q,c:m.c,d:m.d||0},p0=ptsOf(m);Object.assign(m,patch);addPts(ptsOf(m)-p0);
  try{if(mode==='db'&&m._id)await db.collection('reports').doc(m._id).update(patch);else saveLocal()}
  catch(e){addPts(p0-ptsOf(m));Object.assign(m,old);toast('Détail non enregistré, réessaie.')}
  busy=false;refresh()}

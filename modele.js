@@ -69,15 +69,17 @@ const BQ=[0,.15,.45,.75,1];
 /* attente chronométrée en minutes -> remplissage (5 min = début de « du monde », 15 min = début de « blindé ») */
 const bWait=w=>w<=5?.1+.32*w/5:w<=15?.42+.4*(w-5)/10:Math.min(1.05,.82+.23*(w-15)/10);
 const lvWait=w=>w<5?1:w<15?2:3;
+/* temps pour avoir sa commande, donné après coup : moins de 3, 3 à 6, 6 à 10, 10 à 15, plus de 15 min (milieu de chaque tranche) */
+const DMID=[0,2,4.5,8,12.5,18];
 /* valeur d'une info, de la plus précise à la moins précise : attente chronométrée, sinon niveau + file, sinon niveau seul.
    Les détails ajustent : service lent, peu de personnel, bornes prises ou gros groupe = plus d'attente */
-const bRep=x=>{if(x.w>0)return bWait(x.w);let b=x.q>0?(BL[x.l]+BQ[x.q])/2:BL[x.l];const t=x.tg||[];b+=.07*t.filter(k=>k==='le'||k==='pe'||k==='bo'||k==='gr').length;if(t.includes('pl'))b=Math.max(b,.8);return Math.min(1.05,b)};
+const bRep=x=>{if(x.w>0)return bWait(x.w);let b=x.q>0?(BL[x.l]+BQ[x.q])/2:BL[x.l];const t=x.tg||[];b+=.07*t.filter(k=>k==='le'||k==='pe'||k==='bo'||k==='gr').length;if(t.includes('pl'))b=Math.max(b,.8);if(x.d>0&&DMID[x.d])b=(b+bWait(DMID[x.d]))/2;return Math.min(1.05,b)};
 /* poids d'une info : confirmée sur place, position inconnue, ou donnée de loin ; une attente chronométrée compte 1,5 fois plus */
 const wG=x=>(x.g===1?1.3:x.g===-1?.5:1)*(x.w>0?1.5:1);
 /* ===== points et classement (partagés entre le site et la mise à jour automatique) ===== */
 /* une info rapporte 10 points ; +5 si elle est donnée sur place, +15 pour une attente chronométrée, +5 pour un comptage photo,
    +2 pour la file, +2 pour un détail. Une info donnée de loin ne rapporte que 2 points. */
-const ptsOf=x=>x.g===-1?2:10+(x.g===1?5:0)+(x.w>0?15:0)+(x.c>0?5:0)+(x.q>0?2:0)+((x.tg||[]).length?2:0);
+const ptsOf=x=>x.g===-1?2:10+(x.g===1?5:0)+(x.w>0?15:0)+(x.c>0?5:0)+(x.q>0?2:0)+((x.tg||[]).length?2:0)+(x.d>0&&!(x.w>0)?5:0);
 const NIVEAUX=[[0,'Nouveau'],[50,'Habitué'],[200,'Éclaireur'],[500,'Expert de la file'],[1500,'Légende']];
 /* pseudo automatique tiré de l'identifiant anonyme : personne ne choisit de nom, donc rien à modérer */
 const PSA=['Frite','Nugget','Cornichon','Sésame','Ketchup','Moutarde','Milkshake','Bun','Sundae','Pilon','Wrap','Oignon'],PSB=['pressé','malin','rapide','zen','futé','affamé','discret','vif','matinal','nocturne','patient','chanceux'];
