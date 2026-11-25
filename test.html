@@ -520,7 +520,10 @@ function recentHits(){const out=[];for(const it of RECENT){
   else if(it.k==='br'&&TAB!=='rs'&&Array.isArray(it.set)&&it.set.every(k=>BR[k])){const town=it.tn?TOWNS.find(t=>t.n===it.tn&&t.d===it.td):null,x={t:'br',set:it.set,cat:it.cat,town:town||undefined};out.push({hit:x,lab:setName(x)+(town?' à '+town.n:''),sub:'Enseigne'})}
   else if(it.k==='r'&&TAB!=='rs'&&byId[it.id]){const r=byId[it.id];out.push({hit:{t:'r',v:r},lab:BR[r.b].n+' '+r.name,sub:r.city})}
   else if(it.k==='rst'&&TAB==='rs'&&RT[it.v])out.push({hit:{t:'rst',v:it.v},lab:RT[it.v],sub:'Type de resto'})}
- return out.slice(0,4)}
+ return out.slice(0,5)}
+/* barre vide : seulement les dernières recherches (rien si aucune) */
+function recentBox(){let i=0;hits=[];const rec=recentHits();if(!rec.length)return'';
+ return '<div class="h">Tes dernières recherches</div>'+rec.map(x=>{hits.push(x.hit);return `<button data-i="${i++}"><span class="mini" style="background:#8d959e">↺</span><span><b>${esc(x.lab)}</b><br><small class="mut">${esc(x.sub||'')}</small></span></button>`}).join('')}
 function helpBox(){let i=0,h='';hits=[];const add=x=>{hits.push(x);return i++};
  const ff=TAB!=='rs',geo=CFG.position&&!ART&&navigator.geolocation,acts=[];
  if(geo)acts.push(['me','📍 Autour de moi']);
@@ -538,7 +541,7 @@ function helpBox(){let i=0,h='';hits=[];const add=x=>{hits.push(x);return i++};
 function search(force){const q=norm($('q').value),box=$('res');$('clr').style.display=q?'block':'none';
  if(q.length<2&&!(force===true||(!q&&document.activeElement===$('q')&&force!==false))){box.style.display='none';return}
  let i=0,h='';hits=[];
- if(!q){box.innerHTML=helpBox();box.style.display='block';return}
+ if(!q&&force!==true){const rh=recentBox();box.innerHTML=rh;box.style.display=rh?'block':'none';return}
  if(TAB==='rs')return rsSearch(q);
  if(!q){hits=Object.keys(BR).map(k=>({t:'br',set:[k]}));
   h='<div class="h">Choisis une enseigne</div>'+(F.sel?`<button data-i="-1"><span class="mini" style="background:#5f6670">✓</span><span><b>Toutes les enseignes</b></span></button>`:'')
