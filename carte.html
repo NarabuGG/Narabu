@@ -655,7 +655,7 @@ function renderDetail(){const r=sel;if(!r)return;view='detail';const st=r.st=sta
  <h3>Tu y es ? Ça attend combien ?</h3>
  ${c&&can&&SRC!=='auto'?`<p class="note cf">Quelqu'un a dit « ${LV[lvOf(c.b)].n} » ${ago(c.last)}. Toujours vrai ? <button class="chip" data-l="${lvOf(c.b)}">Oui, pareil</button></p>`:''}
  ${r.dr?`<div class="seg"><button data-z="salle" aria-pressed="${zone==='salle'}">En salle</button><button data-z="drive" aria-pressed="${zone==='drive'}">Au drive</button></div>`:''}
- <div class="lvl">${LV.slice(1).map((l,i)=>`<button class="lv" data-l="${i+1}" style="color:${l.c}" ${can?'':'disabled'}><span class="dot" style="background:${l.c};width:18px;height:18px"></span><span style="color:var(--ink)"><b>${l.n}</b><small>${l.w}</small></span></button>`).join('')}</div>
+ ${can?gateNote(r.lat,r.lon):''}<div class="lvl">${LV.slice(1).map((l,i)=>`<button class="lv" data-l="${i+1}" style="color:${l.c}" ${can&&gateCan(r.lat,r.lon)?'':'disabled'}><span class="dot" style="background:${l.c};width:18px;height:18px"></span><span style="color:var(--ink)"><b>${l.n}</b><small>${l.w}</small></span></button>`).join('')}</div>
  ${chrono}
  ${extras}
  <div class="go"><a href="https://waze.com/ul?ll=${r.lat},${r.lon}&navigate=yes" target="_blank" rel="noopener">Y aller avec Waze</a><a href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank" rel="noopener">Google Maps</a>${ART?'':'<a href="#" data-share role="button">Partager</a>'}</div>
@@ -706,6 +706,7 @@ $('panel').addEventListener('click',e=>{const t=e.target;
  if(t.closest('[data-geo]'))return geoOn();
  if(t.closest('[data-gx]')){store.set('narabu-geo-x','1');return renderHome()}
  if(t.closest('[data-inst]')&&deferred){deferred.prompt();deferred=null;return renderHome()}
+ if(t.closest('[data-gate-me]')){getPos().then(ok=>{if(!ok)toast('Position refusée ou indisponible sur cet appareil.');filters();view==='rsdetail'?rsDetail():view==='detail'?renderDetail():0});return}
  const l=t.closest('[data-l]');if(l&&!l.disabled)send(+l.dataset.l)});
 /* ===== position, météo (uniquement sur le vrai site : la page claude.ai n'y a pas droit) ===== */
 const distM=(a,b,c,d)=>Math.hypot((d-b)*Math.PI/180*Math.cos((a+c)/2*Math.PI/180),(c-a)*Math.PI/180)*6371000;
@@ -758,7 +759,25 @@ setInterval(meteo,30*60e3);
 let busy=false;
 /* les données partagées ne sont pas fiables par défaut : on ne garde que les champs attendus */
 const clean=(x,id)=>x&&typeof x.r==='string'&&byId[x.r]&&[1,2,3].includes(x.l)&&typeof x.ts==='number'&&x.ts<=Date.now()+60e3?{r:x.r,l:x.l,z:x.z==='drive'?'drive':'salle',ts:x.ts,u:typeof x.u==='string'?x.u:'',tg:Array.isArray(x.tg)?x.tg.filter(k=>typeof k==='string'&&TAGS[k]).slice(0,6):[],p:[1,2,3,4,5].includes(x.p)?x.p:0,g:[-1,1].includes(x.g)?x.g:0,w:x.w>0&&x.w<=90?Math.round(x.w):0,q:[1,2,3,4].includes(x.q)?x.q:0,c:Number.isInteger(x.c)&&x.c>0&&x.c<=300?x.c:0,_id:id}:null;
-async function send(l,r=sel,extra){if(!r||busy)return;busy=true;const doc={v:4,r:r.id,l,z:r===sel?zone:'salle',ts:Date.now(),u:uid||'moi',tg:[],p:0,g:geoFlag(r),w:0,q:0,c:0,...extra};
+/* ===== infos seulement près du resto : à moins de 500 m, ou 2 infos par jour sans position.
+   Vérifié dans le téléphone (la base ne peut pas connaître la vraie position) : ça bloque les abus du quotidien. ===== */
+const GATE=500,NOPOS=2;
+const dayKey=()=>{const d=new Date();return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`};
+const noPosN=()=>{try{const o=JSON.parse(store.get('narabu-nopos')||'{}');return o.d===dayKey()?(o.n||0):0}catch(e){return 0}};
+const noPosAdd=()=>store.set('narabu-nopos',JSON.stringify({d:dayKey(),n:noPosN()+1}));
+const gateOf=(lat,lon)=>{if(meFresh()){const d=distM(ME.lat,ME.lon,lat,lon);return d<=GATE?{ok:1}:{far:d}}return{left:Math.max(0,NOPOS-noPosN())}};
+const gateCan=(lat,lon)=>{const g=gateOf(lat,lon);return !!(g.ok||g.left>0)};
+const geoUse=()=>!!(CFG.position&&!ART&&navigator.geolocation);
+function gateNote(lat,lon){if(mode==='ro')return'';const g=gateOf(lat,lon);if(g.ok)return'';
+ if(g.far)return `<p class="note gate">📍 Tu es à ${dTxt(g.far)}. Pour donner ton info, il faut être à moins de 500 m de ce resto.</p>`;
+ return `<p class="note gate">${g.left?`Sans ta position : encore <b>${g.left} info${g.left>1?'s':''}</b> aujourd'hui.`:'Sans ta position, tu as déjà donné tes 2 infos du jour.'}${geoUse()?' Active ta position pour en donner sans limite quand tu es sur place. <button class="chip" data-gate-me style="margin-top:8px">Activer ma position</button>':''}</p>`}
+const getPos=()=>new Promise(res=>{if(!geoUse())return res(false);navigator.geolocation.getCurrentPosition(p=>{setMe(p);res(true)},()=>res(false),{enableHighAccuracy:true,timeout:8000,maximumAge:60e3})});
+async function gateOk(lat,lon){if(!meFresh())await getPos();const g=gateOf(lat,lon);
+ if(g.ok)return true;
+ if(g.far){toast(`Tu es à ${dTxt(g.far)} : il faut être à moins de 500 m pour donner ton info.`);return false}
+ if(g.left>0){noPosAdd();return true}
+ toast('Sans ta position, c\'est 2 infos par jour. Active ta position sur place pour continuer.');return false}
+async function send(l,r=sel,extra){if(!r||busy)return;busy=true;const gk=await gateOk(r.lat,r.lon);if(!gk){busy=false;if(view==='detail')renderDetail();return}const doc={v:4,r:r.id,l,z:r===sel?zone:'salle',ts:Date.now(),u:uid||'moi',tg:[],p:0,g:geoFlag(r),w:0,q:0,c:0,...extra};
  const flash=!reports.some(x=>x.r===r.id&&Date.now()-x.ts<WIN);try{if(mode==='db'){await db.collection('reports').add(doc);prune()}else{reports.push(clean(doc));saveLocal()}addPts(ptsOf(doc));moiLog({t:'ff',r:r.id,c:r.city,ts:doc.ts,g:doc.g,w:doc.w,f:flash?1:0});toast(`Merci ! +${ptsOf(doc)} points. ${BR[r.b].n} ${r.name} : ${LV[l].n}${doc.w?` (attente mesurée : ${doc.w} min)`:''}`);window.NX&&NX('signal',{c:LV[l].c})}
  catch(e){if(e&&e.code==='invalid_argument'){mode='ro'}toast(e&&e.code==='quota_exceeded'?'Base pleine, info non envoyée.':'Info non envoyée, réessaie.')}
  busy=false;refresh()}
@@ -976,6 +995,7 @@ function rsRefresh(){if(TAB!=='rs')return;rsBuild();if(view==='rsdetail')rsDetai
 let rsBusySend=false;
 async function rsSend(k,s,m,via,sv){const r=rsSel;if(!r||rsBusySend)return;
  const last=JSON.parse(store.get('narabu-rlast')||'{}'),key=r.id+k;if(last[key]&&Date.now()-last[key]<10*60e3)return toast('Tu as déjà donné cette info il y a moins de 10 min.');
+  if((via||'place')==='place'){rsBusySend=true;const gk=await gateOk(r.lat,r.lon);rsBusySend=false;if(!gk){if(view==='rsdetail')rsDetail();return}}
  rsBusySend=true;const doc={v:1,r:r.id,t:r.tile,k,s:s||'',m:Math.round(m||0),via:via||'place',sv:sv||'',ts:Date.now(),u:uid||'moi'};
  try{if(db&&!rsLocal)await db.collection('rreports').add(doc);else{rsRep.push(doc);store.set('narabu-rr',JSON.stringify(rsRep.filter(x=>Date.now()-x.ts<60*86400e3)))}
   if(k==='svc'){const a=rsSvc.get(r.id)||[];a.push(doc.m);rsSvc.set(r.id,a)}else if(rsLocal===false&&!rsRep.includes(doc))rsRep.push(doc);
@@ -1019,7 +1039,7 @@ function rsDetail(){const r=rsSel;if(!r)return;view='rsdetail';const st=r.st=rsS
  <h3>⏱ Chrono du service</h3><p style="margin:0"><b style="font-size:18px">Servi en ${sv.n>=2?'':'environ '}${sv.m} min</b> <span class="mut">${sv.n>=2?`d'après ${sv.n} personnes`:'(estimation pour ce type de resto)'}</span></p>
  ${sv.m<=12&&sv.n>=2?'<span class="tagl w">Rapide le midi</span>':''}
  ${PAUSE?(()=>{const p=rsPlan(r,st,o);return p?`<p class="note">Pour ta pause de ${PAUSES.find(x=>x[0]===PAUSE)[1]} : ${p.walk} min à pied, ${p.wait?p.wait+' min d\'attente, ':''}servi en ${p.svc} min, ${p.eat} min pour manger, ${p.walk} min retour = <b>${p.tot} min</b>. ${p.tot<=PAUSE?'Ça passe ✓':'Trop juste ✗'}</p>`:''})():''}
- <h3>Tu y es ? Dis-le en 1 clic</h3><div class="lvl">
+ <h3>Tu y es ? Dis-le en 1 clic</h3>${gateNote(r.lat,r.lon)}<div class="lvl">
   <button class="lv" data-rt="direct" style="color:#1e9e5a"><span class="dot" style="background:#1e9e5a"></span><span><b>Table tout de suite</b><small>Pas d'attente</small></span></button>
   <button class="lv" data-rt="attente" style="color:#e07b0a"><span class="dot" style="background:#e07b0a"></span><span><b>On m'a fait attendre</b><small>Choisis combien de temps juste après</small></span></button>
   <button class="lv" data-rt="complet" style="color:#d93025"><span class="dot" style="background:#d93025"></span><span><b>Complet</b><small>Plus de place, on m'a refusé</small></span></button></div>
