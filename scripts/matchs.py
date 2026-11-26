@@ -21,7 +21,7 @@ ICI = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(ICI, '..', 'data')
 F_MATCHS = os.path.join(DATA, 'matchs.json')
 F_STADES = os.path.join(DATA, 'stades.json')
-PAUSE = 2.2  # l'API gratuite accepte environ 30 appels par minute
+PAUSE = 3.0  # l'API gratuite accepte environ 30 appels par minute (on reste en dessous)
 
 
 def get(chemin):
@@ -72,17 +72,30 @@ def charger(f, defaut):
         return defaut
 
 
+def garder(ancien, nom, matchs, vus, maintenant, fin):
+    n = 0
+    for m in ancien:
+        if m.get('lg') == nom and m.get('id') not in vus and \
+                (maintenant - timedelta(hours=4)).timestamp() * 1000 <= m.get('ts', 0) <= fin.timestamp() * 1000:
+            vus.add(m['id']); matchs.append(m); n += 1
+    return n
+
+
 def main():
     maintenant = datetime.now(timezone.utc)
     fin = maintenant + timedelta(days=7)
     stades = charger(F_STADES, {})
+    ancien = (charger(F_MATCHS, {}) or {}).get('m') or []
     vus, matchs, ok_ligues = set(), [], 0
 
     for lid, (sport, nom) in LIGUES.items():
         nxt = get(f'eventsnextleague.php?id={lid}')
         ev = (nxt or {}).get('events') or []
+        complet = nxt is not None
         if not ev:
             print(nom, ': pas de prochain match trouvé')
+            if not complet:
+                garder(ancien, nom, matchs, vus, maintenant, fin)
             continue
         ok_ligues += 1
         saison = ev[0].get('strSeason')
@@ -94,6 +107,8 @@ def main():
         if r0 > 0 and saison:
             for r in range(max(1, r0 - 1), r0 + 3):
                 d = get(f'eventsround.php?id={lid}&r={r}&s={saison}')
+                if d is None:
+                    complet = False
                 tous += (d or {}).get('events') or []
         n = 0
         for e in tous:
@@ -132,6 +147,8 @@ def main():
             matchs.append({'id': eid, 'sp': sport, 'lg': nom, 't': f'{dom} – {ext}' if dom and ext else (e.get('strEvent') or ''),
                            'ts': int(t.timestamp() * 1000), 'st': s['n'], 'lat': s['lat'], 'lon': s['lon'], 'cap': s.get('cap') or 0})
             n += 1
+        if not complet:  # la source a raté un appel : on garde aussi les matchs déjà connus de ce championnat
+            n += garder(ancien, nom, matchs, vus, maintenant, fin)
         print(f'{nom} : {n} match(s) dans les 7 prochains jours')
 
     if ok_ligues == 0:
