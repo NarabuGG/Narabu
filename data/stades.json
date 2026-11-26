@@ -1,0 +1,93 @@
+{
+"16024": {
+"cap": 48229,
+"lat": 48.84139,
+"lon": 2.25306,
+"n": "Parc des Princes",
+"v": "Paris, France"
+},
+"16106": {
+"cap": 36178,
+"lat": 43.70528,
+"lon": 7.1925,
+"n": "Allianz Riviera",
+"v": "Nice"
+},
+"16108": {
+"cap": 25178,
+"lat": 49.49889,
+"lon": 0.16972,
+"n": "Stade Océane",
+"v": "Le Havre, France"
+},
+"17543": {
+"cap": 15931,
+"lat": 48.40306,
+"lon": -4.46167,
+"n": "Stade Francis-Le Blé",
+"v": "Brest"
+},
+"20364": {
+"cap": 34462,
+"lat": 44.82917,
+"lon": -0.59778,
+"n": "Stade Chaban-Delmas",
+"v": "Bordeaux"
+},
+"20365": {
+"cap": 19357,
+"lat": 45.78944,
+"lon": 3.10611,
+"n": "Stade Marcel-Michelin",
+"v": "Clermont-Ferrand, France"
+},
+"23525": {
+"cap": 30680,
+"lat": 48.8958,
+"lon": 2.2302,
+"n": "Paris La Défense Arena",
+"v": "Nanterre, Paris"
+},
+"29067": {
+"cap": 18752,
+"lat": 47.46046,
+"lon": -0.53074,
+"n": "Stade Raymond Kopa",
+"v": "Angers"
+},
+"31805": {
+"cap": 3920,
+"lat": null,
+"lon": null,
+"n": "Le Colisée",
+"v": "28 rue Danièle Casanova, Chartres"
+},
+"31807": {
+"cap": 5795,
+"lat": null,
+"lon": null,
+"n": "Le Phare - Grand Chambery",
+"v": ""
+},
+"31808": {
+"cap": 2500,
+"lat": null,
+"lon": null,
+"n": "Stades de Flandres",
+"v": ""
+},
+"31820": {
+"cap": 4191,
+"lat": null,
+"lon": null,
+"n": "Le Parnasse",
+"v": "160 Avenue du Languedoc 30000 Nîmes"
+},
+"31821": {
+"cap": 1020,
+"lat": 48.9573,
+"lon": 2.5701,
+"n": "Palais des sports Tremblay-en-France",
+"v": "Tremblay-en-France"
+}
+}
