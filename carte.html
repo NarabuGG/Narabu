@@ -394,7 +394,30 @@ const CAPB={m:1,b:1,k:1,q:1,f:.7,p:.7,o:.55,i:.5,c:.45,t:.45};
 const cap0=r=>Math.round((r.dr||r.f[8]>.5?90:(r.f[3]>.8||r.f[2]>.5)?50:70)*(CAPB[r.b]||1));
 const capOf=r=>{const l=CAPL.get(r.id),c=cap0(r);return l?(c*2+l[0])/(2+l[1]):c};
 const clampB=b=>Math.max(0,Math.min(1.1,b));
-const autoB=(r,d)=>{const bi=BIAS.get(r.id);return clampB(auto(r,d)+(bi?bi.d:0))};
+/* ===== soirs de match (data/matchs.json, mis à jour par le robot chaque nuit et à midi) =====
+   Seulement les gros matchs (stade ou salle d'au moins 5 000 places), à moins de 1,5 km du stade,
+   et seulement aux heures des repas. Ça change l'estimation, jamais les vraies infos des gens.
+   Les valeurs sont des hypothèses de départ, à ajuster avec les infos des gens. */
+let MATCHS=[];
+const MR=1500,MCAP=5000,MDUR={foot:115,rugby:115,basket:120,hand:90},MICO={foot:'⚽',rugby:'🏉',basket:'🏀',hand:'🤾'};
+const mealH=d=>{const h=d.getHours()+d.getMinutes()/60;return (h>=11&&h<14.5)||(h>=18&&h<23.5)};
+const mCapW=c=>c>=40000?1:c>=20000?.8:c>=10000?.6:.4;
+/* match qui touche ce lieu à cet instant : 2 h avant (ça monte), pendant (rien), 1 h après (ça redescend) */
+function matchAt(lat,lon,t){let best=null;for(const m of MATCHS){const T=m.ts,E=T+(MDUR[m.sp]||115)*60e3;if(t<T-2*3600e3||t>E+3600e3)continue;
+  const d=distM(lat,lon,m.lat,m.lon);if(d>MR)continue;
+  const w=mCapW(m.cap)*(d<=500?1:1-.5*(d-500)/1000),ph=t<T?'avant':t<=E?'pendant':'après';
+  const k=ph==='avant'?.45*w*Math.min(1,.5+.5*(t-(T-2*3600e3))/(1.5*3600e3)):ph==='après'?.35*w*(1-.5*(t-E)/3600e3):0;
+  if(!best||k>best.k)best={m,d,ph,k}}return best}
+const matchB=(r,d)=>{if(!MATCHS.length||!mealH(d))return 0;const x=matchAt(r.lat,r.lon,+d);return x?x.k:0};
+/* ligne sur la fiche : un gros match aujourd'hui à moins de 1,5 km, pas encore fini */
+function matchLine(r){if(!MATCHS.length)return'';const now=Date.now(),day=new Date().toDateString();let best=null;
+ for(const m of MATCHS){const E=m.ts+(MDUR[m.sp]||115)*60e3;if(now>E+3600e3||new Date(m.ts).toDateString()!==day)continue;const d=distM(r.lat,r.lon,m.lat,m.lon);if(d<=MR&&(!best||d<best.d))best={m,d}}
+ if(!best)return'';const m=best.m,h=new Date(m.ts);
+ return `<p class="note match">${MICO[m.sp]||'🏟'} <b>${h.getHours()>=17?'Soir':'Jour'} de match</b> : ${esc(m.t)} à ${hh(h)} (${esc(m.lg)}) · ${esc(m.st)}, à ${dTxt(best.d)}. Ça peut se remplir avant et après le match.</p>`}
+fetch('data/matchs.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{if(!j||!Array.isArray(j.m))return;
+ MATCHS=j.m.filter(m=>m&&m.cap>=MCAP&&isFinite(m.lat)&&isFinite(m.lon)&&m.ts);
+ try{refresh();if(view==='detail')renderDetail()}catch(e){}try{rsRefresh()}catch(e){}}).catch(()=>{});
+const autoB=(r,d)=>{const bi=BIAS.get(r.id);return clampB(auto(r,d)+(bi?bi.d:0)+matchB(r,d))};
 /* état d'un resto selon le mode : both = estimation corrigée par les gens, auto = estimation seule, man = les gens seuls */
 function state(r,now=Date.now()){const oh=openNow(r,new Date(now));if(oh&&!oh.o)return{cur:0,closed:true,src:'closed'};
  const c=SRC==='auto'?null:crowd(r.id,now);
@@ -654,6 +677,7 @@ function renderDetail(){const r=sel;if(!r)return;view='detail';const st=r.st=sta
  ${tg.length||(c&&c.lc&&SRC!=='auto')?`<div>${c.lc&&SRC!=='auto'?`<span class="tagl w">${c.lc.c} personne${c.lc.c>1?'s':''} comptée${c.lc.c>1?'s':''} sur photo ${ago(c.lc.ts)}</span>`:''}${tg.map(([k,n])=>`<span class="tagl w">${TAGS[k]}${n>1?' ×'+n:''}</span>`).join('')}</div>`:''}
  ${tp?`<p class="tip">${tp} <span class="mut" style="font-weight:400">(estimation)</span></p>`:''}
  ${SRC!=='man'?`<h3>Aujourd'hui, heure par heure <span class="mut" style="font-weight:400">(estimation)</span></h3>${dayChart(r)}`:''}
+ ${matchLine(r)}
  ${gardBox(r)}
  <h3>Tu y es ? Ça attend combien ?</h3>
  ${c&&can&&SRC!=='auto'?`<p class="note cf">Quelqu'un a dit « ${LV[lvOf(c.b)].n} » ${ago(c.last)}. Toujours vrai ? <button class="chip" data-l="${lvOf(c.b)}">Oui, pareil</button></p>`:''}
@@ -917,7 +941,7 @@ function rsDemand(r,d){const h=d.getHours()+d.getMinutes()/60,w=d.getDay();
  const lp=[.9,.7,.7,.7,.72,.75,.78][w],dp=[.5,.45,.5,.55,.68,.92,.95][w];
  let v=Math.max(lp*Math.exp(-(((h-12.75)/.85)**2)),dp*Math.exp(-(((h-20.4)/1.15)**2)));
  if(r.opt&4)v+=.15;if(r.res===2)v+=.1;if(r.res===4)v+=.05;const t=RSI&&RSI.t[r.tile]?0:1;if(t||String(r.tile).startsWith('s'))v+=.04;
- return Math.min(1.1,v)}
+ return Math.min(1.1,v+matchB(r,d))}
 const rsMeal=d=>{const h=d.getHours()+d.getMinutes()/60;return (h>=11.5&&h<15)||(h>=18.5&&h<23.5)};
 const rsService=d=>d.getHours()<16?'midi':'soir';
 function rsLive(r,now=Date.now()){const d=new Date(now),sv=rsService(d),day=ymd(d);let best=null;
@@ -1039,7 +1063,7 @@ function rsDetail(){const r=rsSel;if(!r)return;view='rsdetail';const st=r.st=rsS
  <div class="st${st.est||st.closed||st.off?' est':''}" style="--c:${c};background:${c}"><small style="font-weight:700">Sans réserver</small><strong>${big[0]}</strong><small>${esc(big[1]||'')}</small></div>
  <p class="srcl">${st.closed||st.off?'':esc(rsWhy(r,st))}</p>
  <div class="go">${tel?`<a href="tel:${esc(tel.replace(/[^\d+]/g,''))}">Appeler</a>`:''}${web?`<a href="${esc(web)}" target="_blank" rel="noopener">Réserver / site</a>`:''}<a href="https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}" target="_blank" rel="noopener">Y aller</a></div>
- <h3>⏱ Chrono du service</h3><p style="margin:0"><b style="font-size:18px">Servi en ${sv.n>=2?'':'environ '}${sv.m} min</b> <span class="mut">${sv.n>=2?`d'après ${sv.n} personnes`:'(estimation pour ce type de resto)'}</span></p>
+ ${matchLine(r)}<h3>⏱ Chrono du service</h3><p style="margin:0"><b style="font-size:18px">Servi en ${sv.n>=2?'':'environ '}${sv.m} min</b> <span class="mut">${sv.n>=2?`d'après ${sv.n} personnes`:'(estimation pour ce type de resto)'}</span></p>
  ${sv.m<=12&&sv.n>=2?'<span class="tagl w">Rapide le midi</span>':''}
  ${PAUSE?(()=>{const p=rsPlan(r,st,o);return p?`<p class="note">Pour ta pause de ${PAUSES.find(x=>x[0]===PAUSE)[1]} : ${p.walk} min à pied, ${p.wait?p.wait+' min d\'attente, ':''}servi en ${p.svc} min, ${p.eat} min pour manger, ${p.walk} min retour = <b>${p.tot} min</b>. ${p.tot<=PAUSE?'Ça passe ✓':'Trop juste ✗'}</p>`:''})():''}
  <h3>Tu y es ? Dis-le en 1 clic</h3>${gateNote(r.lat,r.lon)}<div class="lvl">
