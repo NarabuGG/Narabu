@@ -32,6 +32,12 @@ jobs:
           if [ "$(date +%H)" = "04" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             python3 scripts/calendrier.py || echo "Calendrier sauté"
           fi
+      - name: Matchs des 7 prochains jours (la nuit et à midi, ou lancement à la main)
+        if: github.event_name != 'push'
+        run: |
+          if [ "$(date +%H)" = "04" ] || [ "$(date +%H)" = "12" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python3 scripts/matchs.py || echo "Matchs sautés"
+          fi
       - name: Enregistrer les données mises à jour
         run: |
           git config user.name "Narabu robot"
