@@ -20,12 +20,40 @@
 "n": "Stade Océane",
 "v": "Le Havre, France"
 },
+"16131": {
+"cap": 59186,
+"lat": 45.76522,
+"lon": 4.98213,
+"n": "Groupama Stadium",
+"v": "Lyon, France"
+},
+"16189": {
+"cap": 18541,
+"lat": 47.78675,
+"lon": 3.58866,
+"n": "Stade de l'Abbé Deschamps",
+"v": "Auxerre, France"
+},
 "17543": {
 "cap": 15931,
 "lat": 48.40306,
 "lon": -4.46167,
 "n": "Stade Francis-Le Blé",
 "v": "Brest"
+},
+"18238": {
+"cap": 33150,
+"lat": 43.58306,
+"lon": 1.43417,
+"n": "Stadium de Toulouse",
+"v": "Toulouse, France"
+},
+"18262": {
+"cap": 25000,
+"lat": 45.72389,
+"lon": 4.83222,
+"n": "Stade de Gerland",
+"v": "Lyon"
 },
 "20364": {
 "cap": 34462,
@@ -41,6 +69,13 @@
 "n": "Stade Marcel-Michelin",
 "v": "Clermont-Ferrand, France"
 },
+"23521": {
+"cap": 16700,
+"lat": 46.15806,
+"lon": -1.17806,
+"n": "Stade Marcel-Deflandre",
+"v": "La Rochelle"
+},
 "23525": {
 "cap": 30680,
 "lat": 48.8958,
@@ -48,12 +83,33 @@
 "n": "Paris La Défense Arena",
 "v": "Nanterre, Paris"
 },
+"23528": {
+"cap": 20000,
+"lat": 48.84306,
+"lon": 2.25278,
+"n": "Stade Jean-Bouin",
+"v": "Paris, France"
+},
+"26610": {
+"cap": 25000,
+"lat": 47.95958,
+"lon": 0.22129,
+"n": "Stade Marie-Marvingt",
+"v": "Le Mans"
+},
 "29067": {
 "cap": 18752,
 "lat": 47.46046,
 "lon": -0.53074,
 "n": "Stade Raymond Kopa",
 "v": "Angers"
+},
+"31367": {
+"cap": 14370,
+"lat": 43.48556,
+"lon": -1.47917,
+"n": "Stade Jean-Dauger",
+"v": "Bayonne"
 },
 "31805": {
 "cap": 3920,
@@ -74,6 +130,20 @@
 "lat": null,
 "lon": null,
 "n": "Stades de Flandres",
+"v": ""
+},
+"31813": {
+"cap": 3000,
+"lat": null,
+"lon": null,
+"n": "Palais des sports Rene-Bougnol",
+"v": "1000 Av. du Val de Montferrand, 34090 Montpellier"
+},
+"31817": {
+"cap": 2300,
+"lat": null,
+"lon": null,
+"n": "Centre Sportif Intercommunal de Selestat",
 "v": ""
 },
 "31820": {
